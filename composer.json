@@ -15,7 +15,7 @@
   "require": {
     "php": ">=7.2",
     "magento/framework": "102.*.*",
-    "magento/module-mediastorage": "*",
+    "magento/module-media-storage": "*",
     "google/crc32": "~0.1.0",
     "google/cloud-core": "~1.33.0",
     "google/cloud-storage": "~1.14.0"
