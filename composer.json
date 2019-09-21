@@ -1,0 +1,31 @@
+{
+  "name": "auroraextensions/googlecloudstorage",
+  "description": "Google Cloud Storage integration for Magento.",
+  "type": "magento2-module",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Nickolas Burr",
+      "email": "nickolasburr@auroraextensions.com"
+    }
+  ],
+  "support": {
+    "email": "support@auroraextensions.com"
+  },
+  "require": {
+    "php": ">=7.2",
+    "magento/framework": "102.*.*",
+    "magento/module-mediastorage": "*",
+    "google/crc32": "~0.1.0",
+    "google/cloud-core": "~1.33.0",
+    "google/cloud-storage": "~1.14.0"
+  },
+  "autoload": {
+    "files": [
+      "registration.php"
+    ],
+    "psr-4": {
+      "AuroraExtensions\\GoogleCloudStorage\\": ""
+    }
+  }
+}
