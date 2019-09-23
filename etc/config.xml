@@ -28,6 +28,7 @@
                 <name></name>
                 <prefix></prefix>
                 <acl>publicRead</acl>
+                <region>us-central1</region>
             </bucket>
         </googlecloudstorage>
     </default>
