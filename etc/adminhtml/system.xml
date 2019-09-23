@@ -68,6 +68,10 @@
                     </comment>
                     <source_model>AuroraExtensions\GoogleCloudStorage\Model\System\Source\Select\Bucket\Acl</source_model>
                 </field>
+                <field id="region" translate="label comment" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Bucket Region</label>
+                    <source_model>AuroraExtensions\GoogleCloudStorage\Model\System\Source\Select\Bucket\Region</source_model>
+                </field>
             </group>
         </section>
     </system>
