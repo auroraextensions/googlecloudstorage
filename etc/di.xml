@@ -31,4 +31,10 @@
             </argument>
         </arguments>
     </virtualType>
+
+    <type name="Magento\MediaStorage\Model\Config\Source\Storage\Media\Storage">
+        <plugin name="googleCloudStorageConfigurationForMedia"
+                type="AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\Config\GoogleCloudStorageOption"
+                sortOrder="10"/>
+    </type>
 </config>
