@@ -21,7 +21,14 @@
         <googlecloudstorage>
             <general>
                 <enable>0</enable>
+                <gcp_project></gcp_project>
+                <key_file_path></key_file_path>
             </general>
+            <bucket>
+                <name></name>
+                <prefix></prefix>
+                <acl>publicRead</acl>
+            </bucket>
         </googlecloudstorage>
     </default>
 </config>
