@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * di.xml
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the MIT License, which
+ * is bundled with this package in the file LICENSE.txt.
+ *
+ * It is also available on the Internet at the following URL:
+ * https://docs.auroraextensions.com/magento/extensions/2.x/googlecloudstorage/LICENSE.txt
+ *
+ * @package       AuroraExtensions_GoogleCloudStorage
+ * @copyright     Copyright (C) 2019 Aurora Extensions <support@auroraextensions.com>
+ * @license       MIT License
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <virtualType name="AuroraExtensions\GoogleCloudStorage\Model\System\Source\Select\Bucket\Acl"
+                 type="AuroraExtensions\GoogleCloudStorage\Model\System\Source\Select\Generic">
+        <arguments>
+            <argument name="data" xsi:type="array">
+                <item name="authenticatedRead" xsi:type="string" translatable="true">Authenticated Read</item>
+                <item name="bucketOwnerFullControl" xsi:type="string" translatable="true">Bucket Owner Full Control</item>
+                <item name="bucketOwnerRead" xsi:type="string" translatable="true">Bucket Owner Read</item>
+                <item name="private" xsi:type="string" translatable="true">Private</item>
+                <item name="projectPrivate" xsi:type="string" translatable="true">Project Private</item>
+                <item name="publicRead" xsi:type="string" translatable="true">Public Read</item>
+            </argument>
+        </arguments>
+    </virtualType>
+</config>
