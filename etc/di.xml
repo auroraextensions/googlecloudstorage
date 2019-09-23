@@ -31,6 +31,30 @@
             </argument>
         </arguments>
     </virtualType>
+    <virtualType name="AuroraExtensions\GoogleCloudStorage\Model\System\Source\Select\Bucket\Region"
+                 type="AuroraExtensions\GoogleCloudStorage\Model\System\Source\Select\Generic">
+        <arguments>
+            <argument name="data" xsi:type="array">
+                <item name="northamerica-northeast1" xsi:type="string" translatable="true">Montreal (CA)</item>
+                <item name="us-central1" xsi:type="string" translatable="true">Iowa (US)</item>
+                <item name="us-east1" xsi:type="string" translatable="true">South Carolina (US)</item>
+                <item name="us-east4" xsi:type="string" translatable="true">Northern Virginia (US)</item>
+                <item name="us-west1" xsi:type="string" translatable="true">Oregon (US)</item>
+                <item name="us-west2" xsi:type="string" translatable="true">Los Angeles, California (US)</item>
+                <item name="southamerica-east1" xsi:type="string" translatable="true">Sao Paulo (BR)</item>
+                <item name="europe-north1" xsi:type="string" translatable="true">Finland</item>
+                <item name="europe-west1" xsi:type="string" translatable="true">Belgium</item>
+                <item name="europe-west2" xsi:type="string" translatable="true">London (UK)</item>
+                <item name="europe-west3" xsi:type="string" translatable="true">Frankfurt (DE)</item>
+                <item name="europe-west4" xsi:type="string" translatable="true">Netherlands</item>
+                <item name="asia-east1" xsi:type="string" translatable="true">Taiwan</item>
+                <item name="asia-northeast1" xsi:type="string" translatable="true">Tokyo (JP)</item>
+                <item name="asia-south1" xsi:type="string" translatable="true">Mumbai (IN)</item>
+                <item name="asia-southeast1" xsi:type="string" translatable="true">Singapore</item>
+                <item name="australia-southeast1" xsi:type="string" translatable="true">Sydney (AU)</item>
+            </argument>
+        </arguments>
+    </virtualType>
 
     <type name="Magento\MediaStorage\Model\Config\Source\Storage\Media\Storage">
         <plugin name="googleCloudStorageConfigurationForMedia"
