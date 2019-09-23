@@ -27,6 +27,7 @@
                 <item name="private" xsi:type="string" translatable="true">Private</item>
                 <item name="projectPrivate" xsi:type="string" translatable="true">Project Private</item>
                 <item name="publicRead" xsi:type="string" translatable="true">Public Read</item>
+                <item name="publicReadWrite" xsi:type="string" translatable="true">Public Read Write</item>
             </argument>
         </arguments>
     </virtualType>
