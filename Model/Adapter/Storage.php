@@ -118,9 +118,11 @@ class Storage implements StorageObjectManagementInterface
      */
     public function hasPrefix(): bool
     {
-        /** @var string $prefix */
-        $prefix = trim($this->getConfig()->getBucketPrefix());
-        $prefix = !empty($prefix) ? $prefix : null;
+        /** @var string|null $prefix */
+        $prefix = $this->getConfig()->getBucketPrefix();
+        $prefix = $prefix !== null && !empty($prefix)
+            ? $prefix
+            : null;
 
         if ($prefix !== null) {
             return true;
@@ -218,7 +220,7 @@ class Storage implements StorageObjectManagementInterface
             }
         }
 
-        return $bucket->upload($handle, $options);
+        return $this->getBucket()->upload($handle, $options);
     }
 
     /**
