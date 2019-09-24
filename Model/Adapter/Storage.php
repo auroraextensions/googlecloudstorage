@@ -28,22 +28,32 @@ use Google\Cloud\{
     Storage\StorageClient,
     Storage\StorageObject
 };
+use Magento\Framework\{
+    App\Filesystem\DirectoryList,
+    Filesystem
+};
 
 class Storage implements StorageObjectManagementInterface
 {
     /** @property StorageClient $client */
     protected $client;
 
+    /** @property Filesystem $filesystem */
+    protected $filesystem;
+
     /** @property ModuleConfig $moduleConfig */
     protected $moduleConfig;
 
     /**
+     * @param Filesystem $filesystem
      * @param ModuleConfig $moduleConfig
      * @return void
      */
     public function __construct(
+        Filesystem $filesystem,
         ModuleConfig $moduleConfig
     ) {
+        $this->filesystem = $filesystem;
         $this->moduleConfig = $moduleConfig;
         $this->init();
     }
@@ -85,7 +95,7 @@ class Storage implements StorageObjectManagementInterface
     public function getBucket(): ?Bucket
     {
         return $this->getClient()
-            ->getBucket($this->getConfig()->getBucketName());
+            ->bucket($this->getConfig()->getBucketName());
     }
 
     /**
@@ -132,7 +142,7 @@ class Storage implements StorageObjectManagementInterface
             $path = $this->getPrefixPath() . '/' . ltrim($path, DIRECTORY_SEPARATOR);
         }
 
-        return $bucket->object($filePath);
+        return $bucket->object($path);
     }
 
     /**
@@ -145,10 +155,13 @@ class Storage implements StorageObjectManagementInterface
         $bucket = $this->getBucket();
 
         if ($this->hasPrefix()) {
+            /** @var string $prefix */
+            $prefix = $this->getPrefixPath();
+
             if (isset($options['prefix'])) {
-                $options['prefix'] = $this->getPrefixPath() . '/' . ltrim($options['prefix'], DIRECTORY_SEPARATOR);
+                $options['prefix'] = $prefix . '/' . ltrim($options['prefix'], DIRECTORY_SEPARATOR);
             } else {
-                $options['prefix'] = $this->getPrefixPath();
+                $options['prefix'] = $prefix;
             }
         }
 
@@ -165,6 +178,47 @@ class Storage implements StorageObjectManagementInterface
         $object = $this->getObject($path);
 
         return ($object && $object->exists());
+    }
+
+    /**
+     * @param resource|string $handle
+     * @param array $options
+     * @return StorageObject|null
+     */
+    public function uploadObject($handle, array $options = []): ?StorageObject
+    {
+        if (!is_resource($handle) && !is_string($handle)) {
+            return null;
+        }
+
+        if ($this->hasPrefix()) {
+            /** @var string $prefix */
+            $prefix = $this->getPrefixPath();
+
+            if (isset($options['name'])) {
+                $options['name'] = $prefix . '/' . ltrim($options['name'], DIRECTORY_SEPARATOR);
+            } else {
+                /** @var array $metadata */
+                $metadata = stream_get_meta_data($handle);
+
+                /** @var string $mediaBaseDir */
+                $mediaBaseDir = rtrim($this->getMediaBaseDirectory(), DIRECTORY_SEPARATOR);
+
+                /** @var string $absolutePath */
+                $absolutePath = realpath($metadata['uri']);
+
+                /** @var string $relativePath */
+                $relativePath = ltrim(
+                    str_replace($mediaBaseDir, '', $absolutePath),
+                    DIRECTORY_SEPARATOR
+                );
+
+                /* Set bucket-prefixed, absolute pathname on $options['name']. */
+                $options['name'] = $prefix . '/' . ltrim($mediaBaseDir, DIRECTORY_SEPARATOR) . '/' . $relativePath;
+            }
+        }
+
+        return $bucket->upload($handle, $options);
     }
 
     /**
@@ -254,5 +308,15 @@ class Storage implements StorageObjectManagementInterface
         }
 
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMediaBaseDirectory(): string
+    {
+        return $this->filesystem
+            ->getDirectoryRead(DirectoryList::MEDIA)
+            ->getAbsolutePath();
     }
 }
