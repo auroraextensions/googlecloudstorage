@@ -79,6 +79,14 @@ class Bucket extends AbstractModel
     }
 
     /**
+     * @return StorageClient
+     */
+    public function getStorage(): StorageObjectManagementInterface
+    {
+        return $this->storageAdapter;
+    }
+
+    /**
      * @return ModuleConfig
      */
     public function getConfig(): ModuleConfig
@@ -137,10 +145,10 @@ class Bucket extends AbstractModel
         /** @var string $relativePath */
         $relativePath = $this->storageHelper->getMediaRelativePath($filename);
 
-        if ($this->storageAdapter->objectExists($relativePath)) {
+        if ($this->getStorage()->objectExists($relativePath)) {
             $this->setData('id', $filename);
             $this->setData('filename', $filename);
-            $this->setData('content', $this->storageAdapter->getObject($relativePath)->downloadAsString());
+            $this->setData('content', $this->getStorage()->getObject($relativePath)->downloadAsString());
         } else {
             $this->unsetData();
         }
@@ -153,7 +161,7 @@ class Bucket extends AbstractModel
      */
     public function clear()
     {
-        $this->storageAdapter->deleteAllObjects();
+        $this->getStorage()->deleteAllObjects();
         return $this;
     }
 
@@ -184,11 +192,11 @@ class Bucket extends AbstractModel
 
         if (!$this->hasObjects()) {
             $this->setObjects(
-                $this->storageAdapter->getObjects(['maxResults' => $count])
+                $this->getStorage()->getObjects(['maxResults' => $count])
             );
         } else {
             $this->setObjects(
-                $this->storageAdapter->getObjects([
+                $this->getStorage()->getObjects([
                     'maxResults'    => $count,
                     'nextPageToken' => $this->getObjects()->nextPageToken,
                 ])
@@ -244,7 +252,7 @@ class Bucket extends AbstractModel
 
             try {
                 /* Upload file object to bucket. */
-                $this->storageAdapter->uploadToBucket(
+                $this->getStorage()->uploadObject(
                     $content,
                     [
                         'name'          => $relativePath,
@@ -252,7 +260,7 @@ class Bucket extends AbstractModel
                     ]
                 );
 
-                if (!$this->storageAdapter->objectExists($relativePath)) {
+                if (!$this->getStorage()->objectExists($relativePath)) {
                     /** @var LocalizedException $exception */
                     $exception = $this->exceptionFactory->create(
                         LocalizedException::class,
@@ -280,7 +288,7 @@ class Bucket extends AbstractModel
     public function saveFile(string $filename)
     {
         /** @var string $mediaPath */
-        $mediaPath = $this->storageAdapter
+        $mediaPath = $this->getStorage()
             ->getMediaBaseDirectory();
 
         /** @var string $filePath */
@@ -298,7 +306,7 @@ class Bucket extends AbstractModel
                 ->getMediaRelativePath($filePath);
 
             /* Upload file object to bucket. */
-            $storage->uploadToBucket(
+            $storage->uploadObject(
                 $handle,
                 [
                     'name'          => $relativePath,
@@ -306,7 +314,7 @@ class Bucket extends AbstractModel
                 ]
             );
 
-            if (!$this->storageAdapter->objectExists($relativePath)) {
+            if (!$this->getStorage()->objectExists($relativePath)) {
                 /** @var LocalizedException $exception */
                 $exception = $this->exceptionFactory->create(
                     LocalizedException::class,
@@ -332,7 +340,7 @@ class Bucket extends AbstractModel
      */
     public function fileExists(string $filePath): bool
     {
-        return $this->storageAdapter->objectExists($filePath);
+        return $this->getStorage()->objectExists($filePath);
     }
 
     /**
@@ -342,8 +350,8 @@ class Bucket extends AbstractModel
      */
     public function copyFile(string $source, string $target)
     {
-        if ($this->storageAdapter->objectExists($source)) {
-            $this->storageAdapter->copyObject($source, $target);
+        if ($this->getStorage()->objectExists($source)) {
+            $this->getStorage()->copyObject($source, $target);
         }
 
         return $this;
@@ -356,8 +364,8 @@ class Bucket extends AbstractModel
      */
     public function renameFile(string $source, string $target)
     {
-        if ($this->storageAdapter->objectExists($source)) {
-            $this->storageAdapter->renameObject($source, $target);
+        if ($this->getStorage()->objectExists($source)) {
+            $this->getStorage()->renameObject($source, $target);
         }
 
         return $this;
@@ -369,8 +377,8 @@ class Bucket extends AbstractModel
      */
     public function deleteFile(string $path)
     {
-        if ($this->storageAdapter->objectExists($path)) {
-            $this->storageAdapter->deleteObject($path);
+        if ($this->getStorage()->objectExists($path)) {
+            $this->getStorage()->deleteObject($path);
         }
 
         return $this;
@@ -389,7 +397,7 @@ class Bucket extends AbstractModel
         $prefix = rtrim($this->storageHelper->getMediaRelativePath($path), '/') . '/';
 
         /** @var ObjectIterator<StorageObject> $objectsPrefixes */
-        $objectsPrefixes = $this->storageAdapter->getObjects([
+        $objectsPrefixes = $this->getStorage()->getObjects([
             'delimiter' => '/',
             'prefix'    => $prefix,
         ]);
@@ -419,7 +427,7 @@ class Bucket extends AbstractModel
         $prefix = rtrim($this->storageHelper->getMediaRelativePath($path), '/') . '/';
 
         /** @var ObjectIterator<StorageObject> $objectsPrefixes */
-        $objectsPrefixes = $storage->getObjects([
+        $objectsPrefixes = $this->getStorage()->getObjects([
             'delimiter' => '/',
             'prefix'    => $prefix,
         ]);
