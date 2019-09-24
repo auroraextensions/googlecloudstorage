@@ -17,8 +17,6 @@
  */
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
-    <preference for="Magento\MediaStorage\Helper\File\Storage" type="AuroraExtensions\GoogleCloudStorage\Helper\File\Storage"/>
-    <preference for="Magento\MediaStorage\Model\File\Storage" type="AuroraExtensions\GoogleCloudStorage\Model\File\Storage"/>
     <preference for="AuroraExtensions\GoogleCloudStorage\Api\StorageObjectManagementInterface"
                 type="AuroraExtensions\GoogleCloudStorage\Model\Adapter\Storage"/>
 
@@ -61,9 +59,19 @@
         </arguments>
     </virtualType>
 
+    <type name="Magento\MediaStorage\Helper\File\Storage">
+        <plugin name="googleCloudStorageInternalStorageList"
+                type="AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\File\InternalStorageList"
+                sortOrder="10"/>
+    </type>
     <type name="Magento\MediaStorage\Model\Config\Source\Storage\Media\Storage">
-        <plugin name="googleCloudStorageConfigurationForMedia"
+        <plugin name="googleCloudStorageMediaConfiguration"
                 type="AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\Config\GoogleCloudStorageOption"
+                sortOrder="10"/>
+    </type>
+    <type name="Magento\MediaStorage\Model\File\Storage">
+        <plugin name="googleCloudStorageFileStorageModel"
+                type="AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\File\GoogleCloudStorage"
                 sortOrder="10"/>
     </type>
 </config>
