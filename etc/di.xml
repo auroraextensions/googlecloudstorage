@@ -17,6 +17,11 @@
  */
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="Magento\MediaStorage\Helper\File\Storage" type="AuroraExtensions\GoogleCloudStorage\Helper\File\Storage"/>
+    <preference for="Magento\MediaStorage\Model\File\Storage" type="AuroraExtensions\GoogleCloudStorage\Model\File\Storage"/>
+    <preference for="AuroraExtensions\GoogleCloudStorage\Api\StorageObjectManagementInterface"
+                type="AuroraExtensions\GoogleCloudStorage\Model\Adapter\Storage"/>
+
     <virtualType name="AuroraExtensions\GoogleCloudStorage\Model\System\Source\Select\Bucket\Acl"
                  type="AuroraExtensions\GoogleCloudStorage\Model\System\Source\Select\Generic">
         <arguments>
