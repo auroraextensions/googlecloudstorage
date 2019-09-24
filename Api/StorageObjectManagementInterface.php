@@ -19,12 +19,24 @@ declare(strict_types=1);
 namespace AuroraExtensions\GoogleCloudStorage\Api;
 
 use Google\Cloud\{
+    Storage\Bucket,
+    Storage\StorageClient,
     Storage\StorageObject,
     Storage\ObjectIterator
 };
 
 interface StorageObjectManagementInterface
 {
+    /**
+     * @return \Google\Cloud\Storage\StorageClient
+     */
+    public function getClient(): StorageClient;
+
+    /**
+     * @return \Google\Cloud\Storage\Bucket|null
+     */
+    public function getBucket(): ?Bucket;
+
     /**
      * @param string $path
      * @return \Google\Cloud\Storage\StorageObject|null
@@ -36,6 +48,13 @@ interface StorageObjectManagementInterface
      * @return \Google\Cloud\Storage\ObjectIterator|null
      */
     public function getObjects(array $options): ?ObjectIterator;
+
+    /**
+     * @param resource|string $handle
+     * @param array $options
+     * @return \AuroraExtensions\GoogleCloudStorage\Api\StorageObjectManagementInterface
+     */
+    public function uploadObject($handle, array $options): StorageObjectManagementInterface;
 
     /**
      * @param string $source
