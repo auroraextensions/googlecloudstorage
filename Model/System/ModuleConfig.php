@@ -29,9 +29,6 @@ class ModuleConfig
     /** @constant string DEFAULT_ACL_POLICY */
     public const DEFAULT_ACL_POLICY = 'publicRead';
 
-    /** @constant string DEFAULT_BUCKET_PREFIX */
-    public const DEFAULT_BUCKET_PREFIX = '/';
-
     /** @constant string DEFAULT_BUCKET_REGION */
     public const DEFAULT_BUCKET_REGION = 'us-central1';
 
@@ -119,18 +116,18 @@ class ModuleConfig
     /**
      * @param int $store
      * @param string $scope
-     * @return string
+     * @return string|null
      */
     public function getBucketPrefix(
         int $store = Store::DEFAULT_STORE_ID,
         string $scope = ScopeInterface::SCOPE_STORE
-    ): string
+    ): ?string
     {
         return $this->scopeConfig->getValue(
             'googlecloudstorage/bucket/prefix',
             $scope,
             $store
-        ) ?? self::DEFAULT_BUCKET_PREFIX;
+        );
     }
 
     /**
