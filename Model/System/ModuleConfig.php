@@ -26,6 +26,15 @@ use Magento\Store\{
 
 class ModuleConfig
 {
+    /** @constant string DEFAULT_ACL_POLICY */
+    public const DEFAULT_ACL_POLICY = 'publicRead';
+
+    /** @constant string DEFAULT_BUCKET_PREFIX */
+    public const DEFAULT_BUCKET_PREFIX = '/';
+
+    /** @constant string DEFAULT_BUCKET_REGION */
+    public const DEFAULT_BUCKET_REGION = 'us-central1';
+
     /** @property ScopeConfigInterface $scopeConfig */
     protected $scopeConfig;
 
@@ -121,7 +130,7 @@ class ModuleConfig
             'googlecloudstorage/bucket/prefix',
             $scope,
             $store
-        );
+        ) ?? self::DEFAULT_BUCKET_PREFIX;
     }
 
     /**
@@ -138,7 +147,7 @@ class ModuleConfig
             'googlecloudstorage/bucket/acl',
             $scope,
             $store
-        );
+        ) ?? self::DEFAULT_ACL_POLICY;
     }
 
     /**
@@ -155,6 +164,6 @@ class ModuleConfig
             'googlecloudstorage/bucket/region',
             $scope,
             $store
-        );
+        ) ?? self::DEFAULT_BUCKET_REGION;
     }
 }
