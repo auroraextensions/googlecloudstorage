@@ -52,9 +52,9 @@ interface StorageObjectManagementInterface
     /**
      * @param resource|string $handle
      * @param array $options
-     * @return \AuroraExtensions\GoogleCloudStorage\Api\StorageObjectManagementInterface
+     * @return \Google\Cloud\Storage\StorageObject|null
      */
-    public function uploadObject($handle, array $options): StorageObjectManagementInterface;
+    public function uploadObject($handle, array $options): ?StorageObject;
 
     /**
      * @param string $source
