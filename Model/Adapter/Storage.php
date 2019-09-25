@@ -101,7 +101,7 @@ class Storage implements StorageObjectManagementInterface
     /**
      * @return string|null
      */
-    public function getPrefixPath(): ?string
+    public function getPrefix(): ?string
     {
         /** @var string $prefix */
         $prefix = preg_replace('#//+#', '/', $this->getConfig()->getBucketPrefix());
@@ -111,6 +111,19 @@ class Storage implements StorageObjectManagementInterface
         }
 
         return $prefix;
+    }
+
+    /**
+     * @param string $path
+     * @return string
+     */
+    public function getPrefixedFilePath(string $path): string
+    {
+        /** @var string|null $prefix */
+        $prefix = $this->getPrefix();
+        $prefix = '/' . trim($prefix, DIRECTORY_SEPARATOR);
+
+        return ($prefix . '/' . trim($path, DIRECTORY_SEPARATOR));
     }
 
     /**
@@ -141,7 +154,7 @@ class Storage implements StorageObjectManagementInterface
         $bucket = $this->getBucket();
 
         if ($this->hasPrefix()) {
-            $path = $this->getPrefixPath() . '/' . ltrim($path, DIRECTORY_SEPARATOR);
+            $path = $this->getPrefix() . '/' . ltrim($path, DIRECTORY_SEPARATOR);
         }
 
         return $bucket->object($path);
@@ -158,7 +171,7 @@ class Storage implements StorageObjectManagementInterface
 
         if ($this->hasPrefix()) {
             /** @var string $prefix */
-            $prefix = $this->getPrefixPath();
+            $prefix = $this->getPrefix();
 
             if (isset($options['prefix'])) {
                 $options['prefix'] = $prefix . '/' . ltrim($options['prefix'], DIRECTORY_SEPARATOR);
@@ -195,7 +208,7 @@ class Storage implements StorageObjectManagementInterface
 
         if ($this->hasPrefix()) {
             /** @var string $prefix */
-            $prefix = $this->getPrefixPath();
+            $prefix = $this->getPrefix();
 
             if (isset($options['name'])) {
                 $options['name'] = $prefix . '/' . ltrim($options['name'], DIRECTORY_SEPARATOR);
@@ -220,7 +233,8 @@ class Storage implements StorageObjectManagementInterface
             }
         }
 
-        return $this->getBucket()->upload($handle, $options);
+        return $this->getBucket()
+            ->upload($handle, $options);
     }
 
     /**
@@ -235,7 +249,7 @@ class Storage implements StorageObjectManagementInterface
         }
 
         if ($this->hasPrefix()) {
-            $target = $this->getPrefixPath() . '/' . ltrim($target, DIRECTORY_SEPARATOR);
+            $target = $this->getPrefix() . '/' . ltrim($target, DIRECTORY_SEPARATOR);
         }
 
         /** @var StorageObject $object */
@@ -260,7 +274,7 @@ class Storage implements StorageObjectManagementInterface
         }
 
         if ($this->hasPrefix()) {
-            $target = $this->getPrefixPath() . '/' . ltrim($target, DIRECTORY_SEPARATOR);
+            $target = $this->getPrefix() . '/' . ltrim($target, DIRECTORY_SEPARATOR);
         }
 
         /** @var StorageObject $object */
