@@ -185,7 +185,7 @@ class Bucket extends AbstractModel
      */
     public function exportFiles(
         int $offset = 0,
-        int $count = 100
+        int $count = 1
     ) {
         /** @var array $files */
         $files = [];
