@@ -74,4 +74,9 @@
                 type="AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\File\GoogleCloudStorage"
                 sortOrder="10"/>
     </type>
+    <type name="Magento\MediaStorage\Model\ResourceModel\File\Storage\File">
+        <plugin name="googleCloudStorageFileStorageFileProcessor"
+                type="AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\File\Storage\FileProcessor"
+                sortOrder="10"/>
+    </type>
 </config>
