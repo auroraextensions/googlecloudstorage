@@ -21,6 +21,8 @@ namespace AuroraExtensions\GoogleCloudStorage\Model\File\Storage;
 use Exception;
 use AuroraExtensions\GoogleCloudStorage\{
     Api\StorageObjectManagementInterface,
+    Component\ModuleConfigTrait,
+    Component\StorageAdapterTrait,
     Exception\ExceptionFactory,
     Model\System\ModuleConfig
 };
@@ -39,6 +41,10 @@ use Psr\Log\LoggerInterface;
 
 class Bucket extends AbstractModel
 {
+    /** @trait ModuleConfigTrait */
+    /** @trait StorageAdapterTrait */
+    use ModuleConfigTrait, StorageAdapterTrait;
+
     /** @property ExceptionFactory $exceptionFactory */
     protected $exceptionFactory;
 
@@ -83,22 +89,6 @@ class Bucket extends AbstractModel
         $this->moduleConfig = $moduleConfig;
         $this->storageHelper = $storageHelper;
         $this->storageAdapter = $storageAdapter;
-    }
-
-    /**
-     * @return StorageClient
-     */
-    public function getStorage(): StorageObjectManagementInterface
-    {
-        return $this->storageAdapter;
-    }
-
-    /**
-     * @return ModuleConfig
-     */
-    public function getConfig(): ModuleConfig
-    {
-        return $this->moduleConfig;
     }
 
     /**
