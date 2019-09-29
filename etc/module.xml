@@ -20,6 +20,7 @@
     <module name="AuroraExtensions_GoogleCloudStorage" setup_version="1.0.0">
         <sequence>
             <module name="Magento_MediaStorage"/>
+            <module name="Magento_Store"/>
         </sequence>
     </module>
 </config>
