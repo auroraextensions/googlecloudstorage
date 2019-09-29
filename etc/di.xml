@@ -59,6 +59,11 @@
         </arguments>
     </virtualType>
 
+    <type name="Magento\Framework\Image\Adapter\AdapterInterface">
+        <plugin name="googleCloudStorageImageAdapter"
+                type="AuroraExtensions\GoogleCloudStorage\Plugin\Framework\Image\Adapter\ObjectAdapter"
+                sortOrder="10"/>
+    </type>
     <type name="Magento\Framework\File\Uploader">
         <plugin name="googleCloudStorageFileUploaderObjectUploader"
                 type="AuroraExtensions\GoogleCloudStorage\Plugin\Framework\File\Uploader\ObjectUploader"
