@@ -21,17 +21,18 @@ namespace AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\File\Storage;
 use Exception;
 use AuroraExtensions\GoogleCloudStorage\{
     Api\StorageObjectManagementInterface,
-    Model\File\Storage\Bucket,
+    Component\ModuleConfigTrait,
+    Component\StorageAdapterTrait,
     Model\System\ModuleConfig
 };
-use Magento\Framework\Filesystem;
-use Magento\MediaStorage\Model\File\Storage\File as FileResource;
+use Magento\MediaStorage\Model\File\Storage\File;
 use Psr\Log\LoggerInterface;
 
 class FileProcessor
 {
-    /** @property Filesystem $filesystem */
-    protected $filesystem;
+    /** @trait ModuleConfigTrait */
+    /** @trait StorageAdapterTrait */
+    use ModuleConfigTrait, StorageAdapterTrait;
 
     /** @property LoggerInterface $logger */
     protected $logger;
@@ -43,67 +44,54 @@ class FileProcessor
     protected $storageAdapter;
 
     /**
-     * @param Filesystem $filesystem
      * @param LoggerInterface $logger
      * @param ModuleConfig $moduleConfig
      * @param StorageObjectManagementInterface $storageAdapter
      * @return void
      */
     public function __construct(
-        Filesystem $filesystem,
         LoggerInterface $logger,
         ModuleConfig $moduleConfig,
         StorageObjectManagementInterface $storageAdapter
     ) {
-        $this->filesystem = $filesystem;
         $this->logger = $logger;
         $this->moduleConfig = $moduleConfig;
         $this->storageAdapter = $storageAdapter;
     }
 
     /**
-     * @return StorageObjectManagementInterface
-     */
-    public function getStorage(): StorageObjectManagementInterface
-    {
-        return $this->storageAdapter;
-    }
-
-    /**
-     * @return ModuleConfig
-     */
-    public function getConfig(): ModuleConfig
-    {
-        return $this->moduleConfig;
-    }
-
-    /**
-     * @param FileResource $subject
+     * @param File $subject
      * @param bool $result
-     * @param string $filePath
-     * @param string $content
+     * @param array $file
      * @param bool $overwrite
      * @return bool
      */
     public function afterSaveFile(
-        FileResource $subject,
+        File $subject,
         $result,
-        $filePath,
-        $content,
-        $overwrite
+        $file,
+        $overwrite = true
     ) {
         if (!$result) {
             return $result;
         }
 
-        try {
-            /** @var StorageObjectManagementInterface $storage */
-            $storage = $this->getStorage();
+        /** @var StorageObjectManagementInterface $storage */
+        $storage = $this->getStorage();
 
-            /* Prepend bucket prefix, if needed. */
+        try {
+            /** @var string $dirname */
+            $dirname = $file['directory'] ?? null;
+
+            /** @var string $filename */
+            $filename = $dirname !== null
+                ? $dirname . '/' . $file['filename']
+                : $file['filename'];
+
+            /** @var string $filePath */
             $filePath = $storage->hasPrefix()
-                ? $storage->getPrefixedFilePath($filePath)
-                : $filePath;
+                ? $storage->getPrefixedFilePath($filename)
+                : $filename;
 
             /** @var string $aclPolicy */
             $aclPolicy = $this->getConfig()
@@ -115,9 +103,9 @@ class FileProcessor
                 'predefinedAcl' => $aclPolicy,
             ];
 
-            $storage->uploadObject($content, $options);
+            $storage->uploadObject($file['content'], $options);
         } catch (Exception $e) {
-            $this->logger->critical($e);
+            $this->logger->critical($e->getMessage());
         }
 
         return $result;
