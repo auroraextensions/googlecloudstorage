@@ -59,6 +59,11 @@
         </arguments>
     </virtualType>
 
+    <type name="Magento\Framework\File\Uploader">
+        <plugin name="googleCloudStorageFileUploaderObjectUploader"
+                type="AuroraExtensions\GoogleCloudStorage\Plugin\Framework\File\Uploader\ObjectUploader"
+                sortOrder="10"/>
+    </type>
     <type name="Magento\MediaStorage\Helper\File\Storage">
         <plugin name="googleCloudStorageInternalStorageList"
                 type="AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\File\InternalStorageList"
@@ -74,7 +79,7 @@
                 type="AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\File\GoogleCloudStorage"
                 sortOrder="10"/>
     </type>
-    <type name="Magento\MediaStorage\Model\ResourceModel\File\Storage\File">
+    <type name="Magento\MediaStorage\Model\File\Storage\File">
         <plugin name="googleCloudStorageFileStorageFileProcessor"
                 type="AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\File\Storage\FileProcessor"
                 sortOrder="10"/>
