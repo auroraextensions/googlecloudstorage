@@ -1,6 +1,6 @@
 <?php
 /**
- * FileProcessor.php
+ * ObjectUploader.php
  *
  * NOTICE OF LICENSE
  *
@@ -16,23 +16,31 @@
  */
 declare(strict_types=1);
 
-namespace AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\File\Storage;
+namespace AuroraExtensions\GoogleCloudStorage\Plugin\Framework\File\Uploader;
 
 use Exception;
 use AuroraExtensions\GoogleCloudStorage\{
     Api\StorageObjectManagementInterface,
     Component\ModuleConfigTrait,
     Component\StorageAdapterTrait,
+    Model\Adapter\Storage,
     Model\System\ModuleConfig
 };
-use Magento\MediaStorage\Model\File\Storage\File;
+use Magento\Framework\{
+    File\Uploader,
+    Filesystem\Driver\File as FilesystemDriver
+};
+use Magento\MediaStorage\Helper\File\Storage\Database as StorageHelper;
 use Psr\Log\LoggerInterface;
 
-class FileProcessor
+class ObjectUploader
 {
     /** @trait ModuleConfigTrait */
     /** @trait StorageAdapterTrait */
     use ModuleConfigTrait, StorageAdapterTrait;
+
+    /** @property FilesystemDriver $filesystemDriver */
+    protected $filesystemDriver;
 
     /** @property LoggerInterface $logger */
     protected $logger;
@@ -43,36 +51,45 @@ class FileProcessor
     /** @property StorageObjectManagementInterface $storageAdapter */
     protected $storageAdapter;
 
+    /** @property StorageHelper $storageHelper */
+    protected $storageHelper;
+
     /**
+     * @param FilesystemDriver $filesystemDriver
      * @param LoggerInterface $logger
      * @param ModuleConfig $moduleConfig
      * @param StorageObjectManagementInterface $storageAdapter
+     * @param StorageHelper $storageHelper
      * @return void
      */
     public function __construct(
+        FilesystemDriver $filesystemDriver,
         LoggerInterface $logger,
         ModuleConfig $moduleConfig,
-        StorageObjectManagementInterface $storageAdapter
+        StorageObjectManagementInterface $storageAdapter,
+        StorageHelper $storageHelper
     ) {
+        $this->filesystemDriver = $filesystemDriver;
         $this->logger = $logger;
         $this->moduleConfig = $moduleConfig;
         $this->storageAdapter = $storageAdapter;
+        $this->storageHelper = $storageHelper;
     }
 
     /**
-     * @param File $subject
-     * @param bool $result
-     * @param array $file
-     * @param bool $overwrite
-     * @return bool
+     * @param Uploader $subject
+     * @param array|bool $result
+     * @param string $destinationFolder
+     * @param string|null $newFileName
+     * @return array
      */
-    public function afterSaveFile(
-        File $subject,
+    public function afterSave(
+        Uploader $subject,
         $result,
-        $file,
-        $overwrite = true
+        $destinationFolder,
+        $newFileName = null
     ) {
-        if (!$result) {
+        if (!is_array($result)) {
             return $result;
         }
 
@@ -80,18 +97,17 @@ class FileProcessor
         $storage = $this->getStorage();
 
         try {
-            /** @var string $dirname */
-            $dirname = $file['directory'] ?? null;
-
-            /** @var string $filename */
-            $filename = $dirname !== null
-                ? $dirname . '/' . $file['filename']
-                : $file['filename'];
+            /** @var string $realPath */
+            $realPath = $result['path'] . $result['file'];
 
             /** @var string $filePath */
-            $filePath = $storage->hasPrefix()
-                ? $storage->getPrefixedFilePath($filename)
-                : $filename;
+            $filePath = $this->storageHelper
+                ->getMediaRelativePath($realPath);
+
+            /** @var string $objectPath */
+            $objectPath = $storage->hasPrefix()
+                ? $storage->getPrefixedFilePath($filePath)
+                : $filePath;
 
             /** @var string $aclPolicy */
             $aclPolicy = $this->getConfig()
@@ -99,11 +115,15 @@ class FileProcessor
 
             /** @var array $options */
             $options = [
-                'name' => $filePath,
+                'name' => $objectPath,
                 'predefinedAcl' => $aclPolicy,
             ];
 
-            $storage->uploadObject($file['content'], $options);
+            /** @var resource $handle */
+            $handle = $this->filesystemDriver
+                ->fileOpen($realPath, 'r');
+
+            $storage->uploadObject($handle, $options);
         } catch (Exception $e) {
             $this->logger->critical($e->getMessage());
         }

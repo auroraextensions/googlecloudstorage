@@ -18,8 +18,38 @@ declare(strict_types=1);
 
 namespace AuroraExtensions\GoogleCloudStorage\Model\File;
 
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\MediaStorage\Model\File\Storage as FileStorage;
+
 class Storage
 {
     /** @constant int STORAGE_MEDIA_GCS */
     public const STORAGE_MEDIA_GCS = 2;
+
+    /** @property ScopeConfigInterface $scopeConfig */
+    protected $scopeConfig;
+
+    /**
+     * @param ScopeConfigInterface $scopeConfig
+     * @return void
+     */
+    public function __construct(
+        ScopeConfigInterface $scopeConfig
+    ) {
+        $this->scopeConfig = $scopeConfig;
+    }
+
+    /**
+     * @return bool
+     */
+    public function checkBucketUsage(): bool
+    {
+        /** @var int $storage */
+        $storage = (int) $this->scopeConfig->getValue(
+            FileStorage::XML_PATH_STORAGE_MEDIA,
+            ScopeConfigInterface::SCOPE_TYPE_DEFAULT
+        );
+
+        return ($storage === self::STORAGE_MEDIA_GCS);
+    }
 }

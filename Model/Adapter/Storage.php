@@ -120,8 +120,7 @@ class Storage implements StorageObjectManagementInterface
     public function getPrefixedFilePath(string $path): string
     {
         /** @var string|null $prefix */
-        $prefix = $this->getPrefix();
-        $prefix = '/' . trim($prefix, DIRECTORY_SEPARATOR);
+        $prefix = '/' . trim($this->getPrefix(), DIRECTORY_SEPARATOR);
 
         return ($prefix . '/' . trim($path, DIRECTORY_SEPARATOR));
     }
