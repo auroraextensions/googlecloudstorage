@@ -20,9 +20,9 @@ namespace AuroraExtensions\GoogleCloudStorage\Api;
 
 use Google\Cloud\{
     Storage\Bucket,
+    Storage\ObjectIterator,
     Storage\StorageClient,
-    Storage\StorageObject,
-    Storage\ObjectIterator
+    Storage\StorageObject
 };
 
 interface StorageObjectManagementInterface
