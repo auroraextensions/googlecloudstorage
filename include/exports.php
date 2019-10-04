@@ -1,6 +1,6 @@
 <?php
 /**
- * registration.php
+ * exports.php
  *
  * NOTICE OF LICENSE
  *
@@ -16,12 +16,10 @@
  */
 declare(strict_types=1);
 
-use Magento\Framework\Component\ComponentRegistrar;
+if (!defined('DS')) {
+    define('DS', '/');
+}
 
-ComponentRegistrar::register(
-    ComponentRegistrar::MODULE,
-    'AuroraExtensions_GoogleCloudStorage',
-    __DIR__
-);
-
-require_once __DIR__ . '/include/exports.php';
+if (!defined('PS')) {
+    define('PS', ':');
+}
