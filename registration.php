@@ -23,3 +23,5 @@ ComponentRegistrar::register(
     'AuroraExtensions_GoogleCloudStorage',
     __DIR__
 );
+
+require_once __DIR__ . '/include/exports.php';
