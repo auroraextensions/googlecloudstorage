@@ -20,6 +20,7 @@ namespace AuroraExtensions\GoogleCloudStorage\Model\Adapter;
 
 use AuroraExtensions\GoogleCloudStorage\{
     Api\StorageObjectManagementInterface,
+    Component\ModuleConfigTrait,
     Model\System\ModuleConfig
 };
 use Google\Cloud\{
@@ -35,6 +36,9 @@ use Magento\Framework\{
 
 class Storage implements StorageObjectManagementInterface
 {
+    /** @trait ModuleConfigTrait */
+    use ModuleConfigTrait;
+
     /** @property StorageClient $client */
     protected $client;
 
@@ -61,24 +65,19 @@ class Storage implements StorageObjectManagementInterface
     /**
      * @return $this
      */
-    protected function init()
+    private function init()
     {
         if (!$this->client) {
+            /** @var ModuleConfig $moduleConfig */
+            $moduleConfig = $this->getConfig();
+
             $this->client = new StorageClient([
-                'projectId'   => $this->getConfig()->getGoogleCloudProject(),
-                'keyFilePath' => $this->getConfig()->getJsonKeyFilePath(),
+                'projectId'   => $moduleConfig->getGoogleCloudProject(),
+                'keyFilePath' => $moduleConfig->getJsonKeyFilePath(),
             ]);
         }
 
         return $this;
-    }
-
-    /**
-     * @return ModuleConfig
-     */
-    public function getConfig(): ModuleConfig
-    {
-        return $this->moduleConfig;
     }
 
     /**
@@ -104,10 +103,14 @@ class Storage implements StorageObjectManagementInterface
     public function getPrefix(): ?string
     {
         /** @var string $prefix */
-        $prefix = preg_replace('#//+#', '/', $this->getConfig()->getBucketPrefix());
+        $prefix = preg_replace(
+            '#//+#',
+            DS,
+            $this->getConfig()->getBucketPrefix()
+        );
 
-        if (strlen($prefix) && $prefix[0] === '/') {
-            $prefix = ltrim($prefix, '/');
+        if (strlen($prefix) && $prefix[0] === DS) {
+            $prefix = ltrim($prefix, DS);
         }
 
         return $prefix;
@@ -120,9 +123,9 @@ class Storage implements StorageObjectManagementInterface
     public function getPrefixedFilePath(string $path): string
     {
         /** @var string|null $prefix */
-        $prefix = '/' . trim($this->getPrefix(), DIRECTORY_SEPARATOR);
+        $prefix = DS . trim($this->getPrefix(), DS);
 
-        return ($prefix . '/' . trim($path, DIRECTORY_SEPARATOR));
+        return ($prefix . DS . trim($path, DS));
     }
 
     /**
@@ -153,7 +156,7 @@ class Storage implements StorageObjectManagementInterface
         $bucket = $this->getBucket();
 
         if ($this->hasPrefix()) {
-            $path = $this->getPrefix() . '/' . ltrim($path, DIRECTORY_SEPARATOR);
+            $path = $this->getPrefix() . DS . ltrim($path, DS);
         }
 
         return $bucket->object($path);
@@ -173,7 +176,7 @@ class Storage implements StorageObjectManagementInterface
             $prefix = $this->getPrefix();
 
             if (isset($options['prefix'])) {
-                $options['prefix'] = $prefix . '/' . ltrim($options['prefix'], DIRECTORY_SEPARATOR);
+                $options['prefix'] = $prefix . DS . ltrim($options['prefix'], DS);
             } else {
                 $options['prefix'] = $prefix;
             }
@@ -210,13 +213,13 @@ class Storage implements StorageObjectManagementInterface
             $prefix = $this->getPrefix();
 
             if (isset($options['name'])) {
-                $options['name'] = $prefix . '/' . ltrim($options['name'], DIRECTORY_SEPARATOR);
+                $options['name'] = $prefix . DS . ltrim($options['name'], DS);
             } else {
                 /** @var array $metadata */
                 $metadata = stream_get_meta_data($handle);
 
                 /** @var string $mediaBaseDir */
-                $mediaBaseDir = rtrim($this->getMediaBaseDirectory(), DIRECTORY_SEPARATOR);
+                $mediaBaseDir = rtrim($this->getMediaBaseDirectory(), DS);
 
                 /** @var string $absolutePath */
                 $absolutePath = realpath($metadata['uri']);
@@ -224,11 +227,11 @@ class Storage implements StorageObjectManagementInterface
                 /** @var string $relativePath */
                 $relativePath = ltrim(
                     str_replace($mediaBaseDir, '', $absolutePath),
-                    DIRECTORY_SEPARATOR
+                    DS
                 );
 
                 /* Set bucket-prefixed, absolute pathname on $options['name']. */
-                $options['name'] = $prefix . '/' . ltrim($mediaBaseDir, DIRECTORY_SEPARATOR) . '/' . $relativePath;
+                $options['name'] = $prefix . DS . ltrim($mediaBaseDir, DS) . DS . $relativePath;
             }
         }
 
@@ -248,7 +251,7 @@ class Storage implements StorageObjectManagementInterface
         }
 
         if ($this->hasPrefix()) {
-            $target = $this->getPrefix() . '/' . ltrim($target, DIRECTORY_SEPARATOR);
+            $target = $this->getPrefix() . DS . ltrim($target, DS);
         }
 
         /** @var StorageObject $object */
@@ -273,7 +276,7 @@ class Storage implements StorageObjectManagementInterface
         }
 
         if ($this->hasPrefix()) {
-            $target = $this->getPrefix() . '/' . ltrim($target, DIRECTORY_SEPARATOR);
+            $target = $this->getPrefix() . DS . ltrim($target, DS);
         }
 
         /** @var StorageObject $object */
