@@ -14,8 +14,6 @@
  * @copyright     Copyright (C) 2019 Aurora Extensions <support@auroraextensions.com>
  * @license       MIT License
  */
-declare(strict_types=1);
-
 use Magento\Framework\Component\ComponentRegistrar;
 
 ComponentRegistrar::register(
