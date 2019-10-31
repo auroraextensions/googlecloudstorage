@@ -14,7 +14,6 @@
  * @copyright     Copyright (C) 2019 Aurora Extensions <support@auroraextensions.com>
  * @license       MIT License
  */
-declare(strict_types=1);
 
 if (!defined('DS')) {
     define('DS', '/');
