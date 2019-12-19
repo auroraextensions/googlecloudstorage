@@ -1,6 +1,6 @@
 <?php
 /**
- * UploadObjectToBucket.php
+ * ObjectUploader.php
  *
  * NOTICE OF LICENSE
  *
@@ -37,7 +37,7 @@ use Magento\Framework\{
 use Magento\MediaStorage\Helper\File\Storage\Database as StorageHelper;
 use Psr\Log\LoggerInterface;
 
-class UploadObjectToBucket
+class ObjectUploader
 {
     use ModuleConfigTrait, StorageAdapterTrait;
 
