@@ -61,7 +61,7 @@
 
     <type name="Magento\Catalog\Model\Product\Gallery\CreateHandler">
         <plugin name="googlecloudstorage_catalog_product_gallery_object_uploader"
-                type="AuroraExtensions\GoogleCloudStorage\Plugin\Framework\Image\Adapter\ObjectAdapter"
+                type="AuroraExtensions\GoogleCloudStorage\Plugin\Catalog\Product\Gallery\ObjectUploader"
                 sortOrder="10"/>
     </type>
     <type name="Magento\Framework\Image\Adapter\AdapterInterface">
