@@ -20,10 +20,13 @@ namespace AuroraExtensions\GoogleCloudStorage\Model\System\Source\Select;
 
 use Magento\Framework\Option\ArrayInterface;
 
+use function array_flip;
+use function array_walk;
+
 class Generic implements ArrayInterface
 {
-    /** @property array $options */
-    protected $options = [];
+    /** @var array $options */
+    private $options = [];
 
     /**
      * @param array $data
@@ -48,7 +51,7 @@ class Generic implements ArrayInterface
      * @param int|string $key
      * @return void
      */
-    protected function setOption($value, $key): void
+    private function setOption($value, $key): void
     {
         $this->options[] = [
             'label' => __($key),
@@ -57,7 +60,7 @@ class Generic implements ArrayInterface
     }
 
     /**
-     * @return array
+     * {@inheritdoc}
      */
     public function toOptionArray()
     {

@@ -23,11 +23,12 @@ use Magento\MediaStorage\{
     Helper\File\Storage as StorageHelper,
     Model\File\Storage as FileStorage
 };
+use function in_array;
 
 class InternalStorageList
 {
-    /** @property array $storageList */
-    protected $storageList = [
+    /** @constant array STORAGE_TYPES */
+    private const STORAGE_TYPES = [
         FileStorage::STORAGE_MEDIA_FILE_SYSTEM,
         GoogleCloudStorage::STORAGE_MEDIA_GCS,
     ];
@@ -43,10 +44,6 @@ class InternalStorageList
         $result,
         $storage = null
     ) {
-        if (!$result) {
-            return in_array($storage, $this->storageList);
-        }
-
-        return $result;
+        return !$result ? in_array($storage, self::STORAGE_TYPES) : $result;
     }
 }

@@ -32,8 +32,8 @@ class ModuleConfig
     /** @constant string DEFAULT_BUCKET_REGION */
     public const DEFAULT_BUCKET_REGION = 'us-central1';
 
-    /** @property ScopeConfigInterface $scopeConfig */
-    protected $scopeConfig;
+    /** @var ScopeConfigInterface $scopeConfig */
+    private $scopeConfig;
 
     /**
      * @param ScopeConfigInterface $scopeConfig

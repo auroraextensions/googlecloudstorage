@@ -20,10 +20,14 @@ namespace AuroraExtensions\GoogleCloudStorage\Model\ResourceModel\File\Storage;
 
 use AuroraExtensions\GoogleCloudStorage\Api\StorageObjectManagementInterface;
 
+use const DIRECTORY_SEPARATOR;
+use function rtrim;
+use function strlen;
+
 class Bucket
 {
-    /** @property StorageObjectManagementInterface $storageAdapter */
-    protected $storageAdapter;
+    /** @var StorageObjectManagementInterface $storageAdapter */
+    private $storageAdapter;
 
     /**
      * @param StorageObjectManagementInterface $storageAdapter
@@ -42,11 +46,11 @@ class Bucket
     public function deleteFolder(string $dirname = ''): void
     {
         /* Trim trailing slash from $dirname. */
-        $dirname = rtrim($dirname, '/');
+        $dirname = rtrim($dirname, DIRECTORY_SEPARATOR);
 
         if (strlen($dirname)) {
             /* Append slash back to $dirname. */
-            $dirname .= '/';
+            $dirname .= DIRECTORY_SEPARATOR;
 
             /* Delete all objects with $dirname prefix. */
             $this->storageAdapter->deleteAllObjects(['prefix' => $dirname]);

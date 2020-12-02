@@ -26,8 +26,8 @@ class Storage
     /** @constant int STORAGE_MEDIA_GCS */
     public const STORAGE_MEDIA_GCS = 2;
 
-    /** @property ScopeConfigInterface $scopeConfig */
-    protected $scopeConfig;
+    /** @var ScopeConfigInterface $scopeConfig */
+    private $scopeConfig;
 
     /**
      * @param ScopeConfigInterface $scopeConfig

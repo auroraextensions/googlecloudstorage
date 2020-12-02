@@ -27,8 +27,8 @@ use Magento\MediaStorage\Model\File\Storage;
 
 class GoogleCloudStorage
 {
-    /** @property BucketFactory $bucketFactory */
-    protected $bucketFactory;
+    /** @var BucketFactory $bucketFactory */
+    private $bucketFactory;
 
     /**
      * @param BucketFactory $bucketFactory
@@ -45,6 +45,7 @@ class GoogleCloudStorage
      * @param AbstractModel|bool
      * @param int|null $storage
      * @param array $params
+     * @return AbstractModel|bool
      */
     public function afterGetStorageModel(
         Storage $subject,
@@ -52,11 +53,6 @@ class GoogleCloudStorage
         $storage = null,
         $params = []
     ) {
-        switch ($storage) {
-            case StorageDriver::STORAGE_MEDIA_GCS:
-                return $this->bucketFactory->create();
-            default:
-                return $result;
-        }
+        return $storage !== StorageDriver::STORAGE_MEDIA_GCS ? $result : $this->bucketFactory->create();
     }
 }
