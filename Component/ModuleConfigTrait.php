@@ -22,6 +22,9 @@ use AuroraExtensions\GoogleCloudStorage\Model\System\ModuleConfig;
 
 trait ModuleConfigTrait
 {
+    /** @var ModuleConfig $moduleConfig */
+    private $moduleConfig;
+
     /**
      * @return ModuleConfig
      */
