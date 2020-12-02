@@ -1,6 +1,6 @@
 <?php
 /**
- * Storage.php
+ * StorageObjectManagement.php
  *
  * NOTICE OF LICENSE
  *
@@ -48,7 +48,7 @@ use function strlen;
 use function str_replace;
 use function trim;
 
-class Storage implements StorageObjectManagementInterface
+class StorageObjectManagement implements StorageObjectManagementInterface
 {
     /**
      * @var ModuleConfig $moduleConfig
