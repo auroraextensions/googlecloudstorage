@@ -22,6 +22,9 @@ use AuroraExtensions\GoogleCloudStorage\Api\StorageObjectManagementInterface;
 
 trait StorageAdapterTrait
 {
+    /** @var StorageObjectManagementInterface $storageAdapter */
+    private $storageAdapter;
+
     /**
      * @return StorageObjectManagementInterface
      */
