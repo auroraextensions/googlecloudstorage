@@ -18,25 +18,11 @@ declare(strict_types=1);
 
 namespace AuroraExtensions\GoogleCloudStorage\Api;
 
-use Google\Cloud\{
-    Storage\Bucket,
-    Storage\ObjectIterator,
-    Storage\StorageClient,
-    Storage\StorageObject
-};
+use Google\Cloud\Storage\ObjectIterator;
+use Google\Cloud\Storage\StorageObject;
 
-interface StorageObjectManagementInterface
+interface StorageObjectManagementInterface extends AbstractStorageManagementInterface
 {
-    /**
-     * @return \Google\Cloud\Storage\StorageClient
-     */
-    public function getClient(): StorageClient;
-
-    /**
-     * @return \Google\Cloud\Storage\Bucket|null
-     */
-    public function getBucket(): ?Bucket;
-
     /**
      * @param string $path
      * @return \Google\Cloud\Storage\StorageObject|null
