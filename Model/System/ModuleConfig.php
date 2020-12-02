@@ -4,15 +4,15 @@
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the MIT License, which
+ * This source file is subject to the MIT license, which
  * is bundled with this package in the file LICENSE.txt.
  *
  * It is also available on the Internet at the following URL:
  * https://docs.auroraextensions.com/magento/extensions/2.x/googlecloudstorage/LICENSE.txt
  *
- * @package       AuroraExtensions_GoogleCloudStorage
+ * @package       AuroraExtensions\GoogleCloudStorage\Model\System
  * @copyright     Copyright (C) 2019 Aurora Extensions <support@auroraextensions.com>
- * @license       MIT License
+ * @license       MIT
  */
 declare(strict_types=1);
 
@@ -32,8 +32,8 @@ class ModuleConfig
     /** @constant string DEFAULT_BUCKET_REGION */
     public const DEFAULT_BUCKET_REGION = 'us-central1';
 
-    /** @property ScopeConfigInterface $scopeConfig */
-    protected $scopeConfig;
+    /** @var ScopeConfigInterface $scopeConfig */
+    private $scopeConfig;
 
     /**
      * @param ScopeConfigInterface $scopeConfig

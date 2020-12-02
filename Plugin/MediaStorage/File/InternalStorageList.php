@@ -4,15 +4,15 @@
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the MIT License, which
+ * This source file is subject to the MIT license, which
  * is bundled with this package in the file LICENSE.txt.
  *
  * It is also available on the Internet at the following URL:
  * https://docs.auroraextensions.com/magento/extensions/2.x/googlecloudstorage/LICENSE.txt
  *
- * @package       AuroraExtensions_GoogleCloudStorage
+ * @package       AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\File
  * @copyright     Copyright (C) 2019 Aurora Extensions <support@auroraextensions.com>
- * @license       MIT License
+ * @license       MIT
  */
 declare(strict_types=1);
 
@@ -23,11 +23,12 @@ use Magento\MediaStorage\{
     Helper\File\Storage as StorageHelper,
     Model\File\Storage as FileStorage
 };
+use function in_array;
 
 class InternalStorageList
 {
-    /** @property array $storageList */
-    protected $storageList = [
+    /** @constant array STORAGE_TYPES */
+    private const STORAGE_TYPES = [
         FileStorage::STORAGE_MEDIA_FILE_SYSTEM,
         GoogleCloudStorage::STORAGE_MEDIA_GCS,
     ];
@@ -43,10 +44,6 @@ class InternalStorageList
         $result,
         $storage = null
     ) {
-        if (!$result) {
-            return in_array($storage, $this->storageList);
-        }
-
-        return $result;
+        return !$result ? in_array($storage, self::STORAGE_TYPES) : $result;
     }
 }

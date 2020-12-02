@@ -4,15 +4,15 @@
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the MIT License, which
+ * This source file is subject to the MIT license, which
  * is bundled with this package in the file LICENSE.txt.
  *
  * It is also available on the Internet at the following URL:
  * https://docs.auroraextensions.com/magento/extensions/2.x/googlecloudstorage/LICENSE.txt
  *
- * @package       AuroraExtensions_GoogleCloudStorage
+ * @package       AuroraExtensions\GoogleCloudStorage\Model\System\Source\Select
  * @copyright     Copyright (C) 2019 Aurora Extensions <support@auroraextensions.com>
- * @license       MIT License
+ * @license       MIT
  */
 declare(strict_types=1);
 
@@ -20,10 +20,13 @@ namespace AuroraExtensions\GoogleCloudStorage\Model\System\Source\Select;
 
 use Magento\Framework\Option\ArrayInterface;
 
+use function array_flip;
+use function array_walk;
+
 class Generic implements ArrayInterface
 {
-    /** @property array $options */
-    protected $options = [];
+    /** @var array $options */
+    private $options = [];
 
     /**
      * @param array $data
@@ -48,7 +51,7 @@ class Generic implements ArrayInterface
      * @param int|string $key
      * @return void
      */
-    protected function setOption($value, $key): void
+    private function setOption($value, $key): void
     {
         $this->options[] = [
             'label' => __($key),
@@ -57,7 +60,7 @@ class Generic implements ArrayInterface
     }
 
     /**
-     * @return array
+     * {@inheritdoc}
      */
     public function toOptionArray()
     {

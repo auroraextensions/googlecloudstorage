@@ -4,15 +4,15 @@
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the MIT License, which
+ * This source file is subject to the MIT license, which
  * is bundled with this package in the file LICENSE.txt.
  *
  * It is also available on the Internet at the following URL:
  * https://docs.auroraextensions.com/magento/extensions/2.x/googlecloudstorage/LICENSE.txt
  *
- * @package       AuroraExtensions_GoogleCloudStorage
+ * @package       AuroraExtensions\GoogleCloudStorage\Model\Adapter
  * @copyright     Copyright (C) 2019 Aurora Extensions <support@auroraextensions.com>
- * @license       MIT License
+ * @license       MIT
  */
 declare(strict_types=1);
 
@@ -27,6 +27,7 @@ use Google\Cloud\{
     Storage\Bucket,
     Storage\ObjectIterator,
     Storage\StorageClient,
+    Storage\StorageClientFactory,
     Storage\StorageObject
 };
 use Magento\Framework\{
@@ -34,50 +35,53 @@ use Magento\Framework\{
     Filesystem
 };
 
+use const DIRECTORY_SEPARATOR;
+use function implode;
+use function is_resource;
+use function is_string;
+use function ltrim;
+use function preg_replace;
+use function realpath;
+use function rtrim;
+use function stream_get_meta_data;
+use function strlen;
+use function str_replace;
+use function trim;
+
 class Storage implements StorageObjectManagementInterface
 {
-    /** @trait ModuleConfigTrait */
+    /**
+     * @var ModuleConfig $moduleConfig
+     * @method ModuleConfig getConfig()
+     */
     use ModuleConfigTrait;
 
-    /** @property StorageClient $client */
-    protected $client;
+    /** @constant string DIRSEP_REGEX */
+    private const DIRSEP_REGEX = '#//+#';
 
-    /** @property Filesystem $filesystem */
-    protected $filesystem;
+    /** @var StorageClient $client */
+    private $client;
 
-    /** @property ModuleConfig $moduleConfig */
-    protected $moduleConfig;
+    /** @var Filesystem $filesystem */
+    private $filesystem;
 
     /**
      * @param Filesystem $filesystem
      * @param ModuleConfig $moduleConfig
+     * @param StorageClientFactory $clientFactory
      * @return void
      */
     public function __construct(
         Filesystem $filesystem,
-        ModuleConfig $moduleConfig
+        ModuleConfig $moduleConfig,
+        StorageClientFactory $clientFactory
     ) {
         $this->filesystem = $filesystem;
         $this->moduleConfig = $moduleConfig;
-        $this->init();
-    }
-
-    /**
-     * @return $this
-     */
-    private function init()
-    {
-        if (!$this->client) {
-            /** @var ModuleConfig $moduleConfig */
-            $moduleConfig = $this->getConfig();
-
-            $this->client = new StorageClient([
-                'projectId'   => $moduleConfig->getGoogleCloudProject(),
-                'keyFilePath' => $moduleConfig->getJsonKeyFilePath(),
-            ]);
-        }
-
-        return $this;
+        $this->client = $clientFactory->create([
+            'projectId' => $moduleConfig->getGoogleCloudProject(),
+            'keyFilePath' => $moduleConfig->getJsonKeyFilePath(),
+        ]);
     }
 
     /**
@@ -104,13 +108,13 @@ class Storage implements StorageObjectManagementInterface
     {
         /** @var string $prefix */
         $prefix = preg_replace(
-            '#//+#',
-            DS,
+            self::DIRSEP_REGEX,
+            DIRECTORY_SEPARATOR,
             $this->getConfig()->getBucketPrefix()
         );
 
-        if (strlen($prefix) && $prefix[0] === DS) {
-            $prefix = ltrim($prefix, DS);
+        if (strlen($prefix) && $prefix[0] === DIRECTORY_SEPARATOR) {
+            $prefix = ltrim($prefix, DIRECTORY_SEPARATOR);
         }
 
         return $prefix;
@@ -122,10 +126,13 @@ class Storage implements StorageObjectManagementInterface
      */
     public function getPrefixedFilePath(string $path): string
     {
-        /** @var string|null $prefix */
-        $prefix = DS . trim($this->getPrefix(), DS);
+        /** @var string $prefix */
+        $prefix = DIRECTORY_SEPARATOR . trim($this->getPrefix(), DIRECTORY_SEPARATOR);
 
-        return ($prefix . DS . trim($path, DS));
+        return implode(DIRECTORY_SEPARATOR, [
+            $prefix,
+            trim($path, DIRECTORY_SEPARATOR),
+        ]);
     }
 
     /**
@@ -135,11 +142,8 @@ class Storage implements StorageObjectManagementInterface
     {
         /** @var string|null $prefix */
         $prefix = $this->getConfig()->getBucketPrefix();
-        $prefix = $prefix !== null && !empty($prefix)
-            ? $prefix
-            : null;
 
-        if ($prefix !== null) {
+        if (!empty($prefix)) {
             return true;
         }
 
@@ -156,7 +160,10 @@ class Storage implements StorageObjectManagementInterface
         $bucket = $this->getBucket();
 
         if ($this->hasPrefix()) {
-            $path = $this->getPrefix() . DS . ltrim($path, DS);
+            $path = implode(DIRECTORY_SEPARATOR, [
+                $this->getPrefix(),
+                ltrim($path, DIRECTORY_SEPARATOR),
+            ]);
         }
 
         return $bucket->object($path);
@@ -176,7 +183,10 @@ class Storage implements StorageObjectManagementInterface
             $prefix = $this->getPrefix();
 
             if (isset($options['prefix'])) {
-                $options['prefix'] = $prefix . DS . ltrim($options['prefix'], DS);
+                $options['prefix'] = implode(DIRECTORY_SEPARATOR, [
+                    $prefix,
+                    ltrim($options['prefix'], DIRECTORY_SEPARATOR),
+                ]);
             } else {
                 $options['prefix'] = $prefix;
             }
@@ -213,13 +223,16 @@ class Storage implements StorageObjectManagementInterface
             $prefix = $this->getPrefix();
 
             if (isset($options['name'])) {
-                $options['name'] = $prefix . DS . ltrim($options['name'], DS);
+                $options['name'] = implode(DIRECTORY_SEPARATOR, [
+                    $prefix,
+                    ltrim($options['name'], DIRECTORY_SEPARATOR),
+                ]);
             } else {
                 /** @var array $metadata */
                 $metadata = stream_get_meta_data($handle);
 
                 /** @var string $mediaBaseDir */
-                $mediaBaseDir = rtrim($this->getMediaBaseDirectory(), DS);
+                $mediaBaseDir = rtrim($this->getMediaBaseDirectory(), DIRECTORY_SEPARATOR);
 
                 /** @var string $absolutePath */
                 $absolutePath = realpath($metadata['uri']);
@@ -227,16 +240,19 @@ class Storage implements StorageObjectManagementInterface
                 /** @var string $relativePath */
                 $relativePath = ltrim(
                     str_replace($mediaBaseDir, '', $absolutePath),
-                    DS
+                    DIRECTORY_SEPARATOR
                 );
 
                 /* Set bucket-prefixed, absolute pathname on $options['name']. */
-                $options['name'] = $prefix . DS . ltrim($mediaBaseDir, DS) . DS . $relativePath;
+                $options['name'] = implode(DIRECTORY_SEPARATOR, [
+                    $prefix,
+                    ltrim($mediaBaseDir, DIRECTORY_SEPARATOR),
+                    $relativePath,
+                ]);
             }
         }
 
-        return $this->getBucket()
-            ->upload($handle, $options);
+        return $this->getBucket()->upload($handle, $options);
     }
 
     /**
@@ -251,7 +267,10 @@ class Storage implements StorageObjectManagementInterface
         }
 
         if ($this->hasPrefix()) {
-            $target = $this->getPrefix() . DS . ltrim($target, DS);
+            $target = implode(DIRECTORY_SEPARATOR, [
+                $this->getPrefix(),
+                ltrim($target, DIRECTORY_SEPARATOR),
+            ]);
         }
 
         /** @var StorageObject $object */
@@ -276,7 +295,10 @@ class Storage implements StorageObjectManagementInterface
         }
 
         if ($this->hasPrefix()) {
-            $target = $this->getPrefix() . DS . ltrim($target, DS);
+            $target = implode(DIRECTORY_SEPARATOR, [
+                $this->getPrefix(),
+                ltrim($target, DIRECTORY_SEPARATOR),
+            ]);
         }
 
         /** @var StorageObject $object */

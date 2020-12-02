@@ -4,15 +4,15 @@
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the MIT License, which
+ * This source file is subject to the MIT license, which
  * is bundled with this package in the file LICENSE.txt.
  *
  * It is also available on the Internet at the following URL:
  * https://docs.auroraextensions.com/magento/extensions/2.x/googlecloudstorage/LICENSE.txt
  *
- * @package       AuroraExtensions_GoogleCloudStorage
+ * @package       AuroraExtensions\GoogleCloudStorage\Plugin\Catalog\Product\Gallery
  * @copyright     Copyright (C) 2019 Aurora Extensions <support@auroraextensions.com>
- * @license       MIT License
+ * @license       MIT
  */
 declare(strict_types=1);
 
@@ -30,37 +30,41 @@ use Magento\Catalog\{
     Model\Product\Media\ConfigInterface
 };
 use Magento\Framework\{
+    Exception\FileSystemException,
     EntityManager\Operation\ExtensionInterface,
-    Filesystem\Driver\File as FilesystemDriver,
+    Filesystem\Driver\File as FileDriver,
     Image\Adapter\AdapterInterface
 };
 use Magento\MediaStorage\Helper\File\Storage\Database as StorageHelper;
 use Psr\Log\LoggerInterface;
 
+use const DIRECTORY_SEPARATOR;
+use function implode;
+
 class ObjectUploader
 {
+    /**
+     * @var ModuleConfig $moduleConfig
+     * @var StorageObjectManagementInterface $storageAdapter
+     * @method ModuleConfig getConfig()
+     * @method StorageObjectManagementInterface getStorage()
+     */
     use ModuleConfigTrait, StorageAdapterTrait;
 
-    /** @property FilesystemDriver $filesystemDriver */
-    protected $filesystemDriver;
+    /** @var FileDriver $fileDriver */
+    private $fileDriver;
 
-    /** @property LoggerInterface $logger */
-    protected $logger;
+    /** @var LoggerInterface $logger */
+    private $logger;
 
-    /** @property ConfigInterface $mediaConfig */
-    protected $mediaConfig;
+    /** @var ConfigInterface $mediaConfig */
+    private $mediaConfig;
 
-    /** @property ModuleConfig $moduleConfig */
-    protected $moduleConfig;
-
-    /** @property StorageObjectManagementInterface $storageAdapter */
-    protected $storageAdapter;
-
-    /** @property StorageHelper $storageHelper */
-    protected $storageHelper;
+    /** @var StorageHelper $storageHelper */
+    private $storageHelper;
 
     /**
-     * @param FilesystemDriver $filesystemDriver
+     * @param FileDriver $fileDriver
      * @param LoggerInterface $logger
      * @param ConfigInterface $mediaConfig
      * @param ModuleConfig $moduleConfig
@@ -69,14 +73,14 @@ class ObjectUploader
      * @return void
      */
     public function __construct(
-        FilesystemDriver $filesystemDriver,
+        FileDriver $fileDriver,
         LoggerInterface $logger,
         ConfigInterface $mediaConfig,
         ModuleConfig $moduleConfig,
         StorageObjectManagementInterface $storageAdapter,
         StorageHelper $storageHelper
     ) {
-        $this->filesystemDriver = $filesystemDriver;
+        $this->fileDriver = $fileDriver;
         $this->logger = $logger;
         $this->mediaConfig = $mediaConfig;
         $this->moduleConfig = $moduleConfig;
@@ -123,42 +127,34 @@ class ObjectUploader
         array $image = []
     ): void
     {
-        /** @var StorageObjectManagementInterface $storage */
-        $storage = $this->getStorage();
+        /** @var string $basePath */
+        $basePath = $this->storageHelper->getMediaBaseDir();
+
+        /** @var string $filePath */
+        $filePath = $this->mediaConfig->getMediaPath($image['file']);
+
+        /** @var string $realPath */
+        $realPath = implode(DIRECTORY_SEPARATOR, [
+            $basePath,
+            $filePath,
+        ]);
+
+        /** @var string $objectPath */
+        $objectPath = $this->getStorage()->hasPrefix()
+            ? $this->getStorage()->getPrefixedFilePath($filePath)
+            : $filePath;
+
+        /** @var array $options */
+        $options = [
+            'name' => $objectPath,
+            'predefinedAcl' => $this->getConfig()->getBucketAclPolicy(),
+        ];
 
         try {
-            /** @var string $basePath */
-            $basePath = $this->storageHelper
-                ->getMediaBaseDir();
-
-            /** @var string $filePath */
-            $filePath = $this->mediaConfig
-                ->getMediaPath($image['file']);
-
-            /** @var string $realPath */
-            $realPath = $basePath . '/' . $filePath;
-
-            /** @var string $objectPath */
-            $objectPath = $storage->hasPrefix()
-                ? $storage->getPrefixedFilePath($filePath)
-                : $filePath;
-
-            /** @var string $aclPolicy */
-            $aclPolicy = $this->getConfig()
-                ->getBucketAclPolicy();
-
-            /** @var array $options */
-            $options = [
-                'name' => $objectPath,
-                'predefinedAcl' => $aclPolicy,
-            ];
-
             /** @var resource $handle */
-            $handle = $this->filesystemDriver
-                ->fileOpen($realPath, 'r');
-
-            $storage->uploadObject($handle, $options);
-        } catch (Exception $e) {
+            $handle = $this->fileDriver->fileOpen($realPath, 'r');
+            $this->getStorage()->uploadObject($handle, $options);
+        } catch (FileSystemException | Exception $e) {
             $this->logger->critical($e->getMessage());
         }
     }

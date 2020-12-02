@@ -9,40 +9,39 @@
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the MIT License, which
+ * This source file is subject to the MIT license, which
  * is bundled with this package in the file LICENSE.txt.
  *
  * It is also available on the Internet at the following URL:
  * https://docs.auroraextensions.com/magento/extensions/2.x/googlecloudstorage/LICENSE.txt
  *
- * @package       AuroraExtensions_GoogleCloudStorage
+ * @package       AuroraExtensions\GoogleCloudStorage\Exception
  * @copyright     Copyright (C) 2019 Aurora Extensions <support@auroraextensions.com>
- * @license       MIT License
+ * @license       MIT
  */
 declare(strict_types=1);
 
 namespace AuroraExtensions\GoogleCloudStorage\Exception;
 
 use Exception;
+use Throwable;
 use Magento\Framework\{
     ObjectManagerInterface,
     Phrase
 };
-use Throwable;
+use function is_subclass_of;
+use function __;
 
 final class ExceptionFactory
 {
-    /** @constant string BASE_TYPE */
-    public const BASE_TYPE = Exception::class;
-
     /** @constant string ERROR_DEFAULT_MESSAGE */
     public const ERROR_DEFAULT_MESSAGE = 'An error has occurred and we are unable to process the request.';
 
     /** @constant string ERROR_INVALID_EXCEPTION_TYPE */
     public const ERROR_INVALID_EXCEPTION_TYPE = 'Invalid exception class type %1 was given.';
 
-    /** @property ObjectManagerInterface $objectManager */
-    protected $objectManager;
+    /** @var ObjectManagerInterface $objectManager */
+    private $objectManager;
 
     /**
      * @param ObjectManagerInterface $objectManager
@@ -56,15 +55,13 @@ final class ExceptionFactory
     }
 
     /**
-     * Create exception from type given.
-     *
-     * @param string|null $type
+     * @param string $type
      * @param Phrase|null $message
      * @return Throwable
      * @throws Exception
      */
     public function create(
-        ?string $type = self::BASE_TYPE,
+        string $type = Exception::class,
         ?Phrase $message = null
     ) {
         /** @var array $arguments */
@@ -82,7 +79,7 @@ final class ExceptionFactory
             );
         }
 
-        if ($type !== self::BASE_TYPE) {
+        if ($type !== Exception::class) {
             $arguments['phrase'] = $message;
         } else {
             $arguments['message'] = $message->__toString();

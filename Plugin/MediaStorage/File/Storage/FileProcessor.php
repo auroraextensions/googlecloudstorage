@@ -4,15 +4,15 @@
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the MIT License, which
+ * This source file is subject to the MIT license, which
  * is bundled with this package in the file LICENSE.txt.
  *
  * It is also available on the Internet at the following URL:
  * https://docs.auroraextensions.com/magento/extensions/2.x/googlecloudstorage/LICENSE.txt
  *
- * @package       AuroraExtensions_GoogleCloudStorage
+ * @package       AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\File\Storage
  * @copyright     Copyright (C) 2019 Aurora Extensions <support@auroraextensions.com>
- * @license       MIT License
+ * @license       MIT
  */
 declare(strict_types=1);
 
@@ -28,20 +28,21 @@ use AuroraExtensions\GoogleCloudStorage\{
 use Magento\MediaStorage\Model\File\Storage\File;
 use Psr\Log\LoggerInterface;
 
+use const DIRECTORY_SEPARATOR;
+use function implode;
+
 class FileProcessor
 {
-    /** @trait ModuleConfigTrait */
-    /** @trait StorageAdapterTrait */
+    /**
+     * @var ModuleConfig $moduleConfig
+     * @var StorageObjectManagementInterface $storageAdapter
+     * @method ModuleConfig getConfig()
+     * @method StorageObjectManagementInterface getStorage()
+     */
     use ModuleConfigTrait, StorageAdapterTrait;
 
-    /** @property LoggerInterface $logger */
-    protected $logger;
-
-    /** @property ModuleConfig $moduleConfig */
-    protected $moduleConfig;
-
-    /** @property StorageObjectManagementInterface $storageAdapter */
-    protected $storageAdapter;
+    /** @var LoggerInterface $logger */
+    private $logger;
 
     /**
      * @param LoggerInterface $logger
@@ -76,34 +77,29 @@ class FileProcessor
             return $result;
         }
 
-        /** @var StorageObjectManagementInterface $storage */
-        $storage = $this->getStorage();
+        /** @var string $filename */
+        $filename = $file['filename'] ?? '';
+
+        /** @var string $dirname */
+        $dirname = $file['directory'] ?? '';
+
+        if (!empty($dirname)) {
+            $filename = implode(DIRECTORY_SEPARATOR, [
+                $dirname,
+                $filename,
+            ]);
+        }
+
+        /** @var string $filePath */
+        $filePath = $this->getStorage()->hasPrefix()
+            ? $this->getStorage()->getPrefixedFilePath($filename)
+            : $filename;
 
         try {
-            /** @var string $dirname */
-            $dirname = $file['directory'] ?? null;
-
-            /** @var string $filename */
-            $filename = $dirname !== null
-                ? $dirname . '/' . $file['filename']
-                : $file['filename'];
-
-            /** @var string $filePath */
-            $filePath = $storage->hasPrefix()
-                ? $storage->getPrefixedFilePath($filename)
-                : $filename;
-
-            /** @var string $aclPolicy */
-            $aclPolicy = $this->getConfig()
-                ->getBucketAclPolicy();
-
-            /** @var array $options */
-            $options = [
+            $this->getStorage()->uploadObject($file['content'], [
                 'name' => $filePath,
-                'predefinedAcl' => $aclPolicy,
-            ];
-
-            $storage->uploadObject($file['content'], $options);
+                'predefinedAcl' => $this->getConfig()->getBucketAclPolicy(),
+            ]);
         } catch (Exception $e) {
             $this->logger->critical($e->getMessage());
         }
