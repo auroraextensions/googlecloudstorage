@@ -27,12 +27,16 @@ use Google\Cloud\{
     Storage\Bucket,
     Storage\ObjectIterator,
     Storage\StorageClient,
-    Storage\StorageClientFactory,
     Storage\StorageObject
 };
 use Magento\Framework\{
     App\Filesystem\DirectoryList,
-    Filesystem
+    Filesystem,
+    Filesystem\Driver\File as FileDriver
+};
+use Psr\Http\{
+    Message\StreamInterface,
+    Message\StreamInterfaceFactory
 };
 
 use const DIRECTORY_SEPARATOR;
@@ -41,10 +45,7 @@ use function is_resource;
 use function is_string;
 use function ltrim;
 use function preg_replace;
-use function realpath;
 use function rtrim;
-use function stream_get_meta_data;
-use function strlen;
 use function str_replace;
 use function trim;
 
@@ -62,25 +63,35 @@ class StorageObjectManagement implements StorageObjectManagementInterface
     /** @var StorageClient $client */
     private $client;
 
+    /** @var FileDriver $fileDriver */
+    private $fileDriver;
+
     /** @var Filesystem $filesystem */
     private $filesystem;
 
+    /** @var StreamInterfaceFactory $streamFactory */
+    private $streamFactory;
+
     /**
+     * @param FileDriver $fileDriver
      * @param Filesystem $filesystem
      * @param ModuleConfig $moduleConfig
-     * @param StorageClientFactory $clientFactory
+     * @param StreamInterfaceFactory $streamFactory
      * @return void
      */
     public function __construct(
+        FileDriver $fileDriver,
         Filesystem $filesystem,
         ModuleConfig $moduleConfig,
-        StorageClientFactory $clientFactory
+        StreamInterfaceFactory $streamFactory
     ) {
+        $this->fileDriver = $fileDriver;
         $this->filesystem = $filesystem;
         $this->moduleConfig = $moduleConfig;
-        $this->client = $clientFactory->create([
+        $this->streamFactory = $streamFactory;
+        $this->client = new StorageClient([
             'projectId' => $moduleConfig->getGoogleCloudProject(),
-            'keyFilePath' => $moduleConfig->getJsonKeyFilePath(),
+            'keyFilePath' => $this->getAbsolutePath($moduleConfig->getJsonKeyFilePath()),
         ]);
     }
 
@@ -113,7 +124,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface
             $this->getConfig()->getBucketPrefix()
         );
 
-        if (strlen($prefix) && $prefix[0] === DIRECTORY_SEPARATOR) {
+        if (!empty($prefix) && $prefix[0] === DIRECTORY_SEPARATOR) {
             $prefix = ltrim($prefix, DIRECTORY_SEPARATOR);
         }
 
@@ -126,11 +137,9 @@ class StorageObjectManagement implements StorageObjectManagementInterface
      */
     public function getPrefixedFilePath(string $path): string
     {
-        /** @var string $prefix */
-        $prefix = DIRECTORY_SEPARATOR . trim($this->getPrefix(), DIRECTORY_SEPARATOR);
-
         return implode(DIRECTORY_SEPARATOR, [
-            $prefix,
+            '',
+            trim($this->getPrefix(), DIRECTORY_SEPARATOR),
             trim($path, DIRECTORY_SEPARATOR),
         ]);
     }
@@ -151,8 +160,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface
     }
 
     /**
-     * @param string $path
-     * @return StorageObject|null
+     * {@inheritdoc}
      */
     public function getObject(string $path): ?StorageObject
     {
@@ -170,8 +178,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface
     }
 
     /**
-     * @param array $options
-     * @return ObjectIterator<StorageObject>|null
+     * {@inheritdoc}
      */
     public function getObjects(array $options = []): ?ObjectIterator
     {
@@ -196,8 +203,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface
     }
 
     /**
-     * @param string $path
-     * @return bool
+     * {@inheritdoc}
      */
     public function objectExists(string $path): bool
     {
@@ -208,9 +214,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface
     }
 
     /**
-     * @param resource|string $handle
-     * @param array $options
-     * @return StorageObject|null
+     * {@inheritdoc}
      */
     public function uploadObject($handle, array $options = []): ?StorageObject
     {
@@ -228,14 +232,14 @@ class StorageObjectManagement implements StorageObjectManagementInterface
                     ltrim($options['name'], DIRECTORY_SEPARATOR),
                 ]);
             } else {
-                /** @var array $metadata */
-                $metadata = stream_get_meta_data($handle);
+                /** @var StreamInterface $stream */
+                $stream = $this->streamFactory->create(['stream' => $handle]);
+
+                /** @var string $absolutePath */
+                $absolutePath = $this->fileDriver->getRealPath($stream->getMetadata('uri'));
 
                 /** @var string $mediaBaseDir */
                 $mediaBaseDir = rtrim($this->getMediaBaseDirectory(), DIRECTORY_SEPARATOR);
-
-                /** @var string $absolutePath */
-                $absolutePath = realpath($metadata['uri']);
 
                 /** @var string $relativePath */
                 $relativePath = ltrim(
@@ -256,9 +260,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface
     }
 
     /**
-     * @param string $source
-     * @param string $target
-     * @return StorageObject|null
+     * {@inheritdoc}
      */
     public function copyObject(string $source, string $target): ?StorageObject
     {
@@ -275,18 +277,11 @@ class StorageObjectManagement implements StorageObjectManagementInterface
 
         /** @var StorageObject $object */
         $object = $this->getObject($source);
-
-        if ($object->exists()) {
-            return $object->copy($target);
-        }
-
-        return null;
+        return $object->exists() ? $object->copy($target) : null;
     }
 
     /**
-     * @param string $source
-     * @param string $target
-     * @return StorageObject|null
+     * {@inheritdoc}
      */
     public function renameObject(string $source, string $target): ?StorageObject
     {
@@ -303,17 +298,11 @@ class StorageObjectManagement implements StorageObjectManagementInterface
 
         /** @var StorageObject $object */
         $object = $this->getObject($source);
-
-        if ($object->exists()) {
-            return $object->rename($target);
-        }
-
-        return null;
+        return $object->exists() ? $object->rename($target) : null;
     }
 
     /**
-     * @param string $path
-     * @return bool
+     * {@inheritdoc}
      */
     public function deleteObject(string $path): bool
     {
@@ -332,8 +321,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface
     }
 
     /**
-     * @param array $options
-     * @return $this
+     * {@inheritdoc}
      */
     public function deleteAllObjects(array $options = []): StorageObjectManagementInterface
     {
@@ -358,5 +346,32 @@ class StorageObjectManagement implements StorageObjectManagementInterface
         return $this->filesystem
             ->getDirectoryRead(DirectoryList::MEDIA)
             ->getAbsolutePath();
+    }
+
+    /**
+     * @param string $path
+     * @return string|null
+     */
+    private function getAbsolutePath(string $path): ?string
+    {
+        if (!empty($path) && $path[0] !== DIRECTORY_SEPARATOR) {
+            /** @var string $basePath */
+            $basePath = $this->filesystem
+                ->getDirectoryRead(DirectoryList::ROOT)
+                ->getAbsolutePath();
+
+            /** @var string $filePath */
+            $filePath = implode(DIRECTORY_SEPARATOR, [
+                rtrim($basePath, DIRECTORY_SEPARATOR),
+                '',
+                rtrim($path, DIRECTORY_SEPARATOR),
+            ]);
+
+            /** @var string $realPath */
+            $realPath = $this->fileDriver->getRealPath($filePath);
+            return $this->fileDriver->isFile($realPath) ? $realPath : null;
+        }
+
+        return !empty($path) ? $path : null;
     }
 }
