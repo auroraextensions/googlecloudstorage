@@ -18,14 +18,12 @@ declare(strict_types=1);
 
 namespace AuroraExtensions\GoogleCloudStorage\Model\File;
 
+use AuroraExtensions\GoogleCloudStorage\Api\StorageMetadataInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\MediaStorage\Model\File\Storage as FileStorage;
 
-class Storage
+class Storage implements StorageMetadataInterface
 {
-    /** @constant int STORAGE_MEDIA_GCS */
-    public const STORAGE_MEDIA_GCS = 2;
-
     /** @var ScopeConfigInterface $scopeConfig */
     private $scopeConfig;
 
@@ -50,6 +48,6 @@ class Storage
             ScopeConfigInterface::SCOPE_TYPE_DEFAULT
         );
 
-        return ($storage === self::STORAGE_MEDIA_GCS);
+        return ($storage === static::STORAGE_MEDIA_GCS);
     }
 }
