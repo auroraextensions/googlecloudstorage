@@ -13,13 +13,16 @@
     "email": "support@auroraextensions.com"
   },
   "require": {
-    "php": ">=7.2",
+    "php": "~7.2.0||~7.3.0||~7.4.0",
+    "psr/http-message": "~1.0",
+    "psr/log": "~1.0",
+    "symfony/console": "^2.7||^3.0||^4.0||^5.0",
     "google/crc32": "~0.1.0",
     "google/cloud-core": "~1.33.0",
     "google/cloud-storage": "~1.14.0",
-    "magento/framework": "102.*.*",
-    "magento/module-media-storage": "100.*.*",
-    "magento/module-store": "101.*.*"
+    "magento/framework": "^100||^101||^102||^103",
+    "magento/module-media-storage": "^100||^101",
+    "magento/module-store": "^100||^101"
   },
   "autoload": {
     "files": [
