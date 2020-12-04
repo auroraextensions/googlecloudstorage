@@ -72,7 +72,7 @@ class ModuleConfig
         string $scope = ScopeInterface::SCOPE_STORE
     ): string
     {
-        return $this->scopeConfig->getValue(
+        return (string) $this->scopeConfig->getValue(
             'googlecloudstorage/general/gcp_project',
             $scope,
             $store
@@ -89,7 +89,7 @@ class ModuleConfig
         string $scope = ScopeInterface::SCOPE_STORE
     ): string
     {
-        return $this->scopeConfig->getValue(
+        return (string) $this->scopeConfig->getValue(
             'googlecloudstorage/general/key_file_path',
             $scope,
             $store
@@ -106,7 +106,7 @@ class ModuleConfig
         string $scope = ScopeInterface::SCOPE_STORE
     ): string
     {
-        return $this->scopeConfig->getValue(
+        return (string) $this->scopeConfig->getValue(
             'googlecloudstorage/bucket/name',
             $scope,
             $store
