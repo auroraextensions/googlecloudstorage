@@ -46,29 +46,29 @@ class SynchronizeCommand extends Command
     /** @constant string COMMAND_DESC */
     private const COMMAND_DESC = 'Synchronize media storage with Google Cloud Storage.';
 
-    /** @var Storage $fileSync */
-    private $fileSync;
+    /** @var State $state */
+    private $state;
+
+    /** @var Storage $storage */
+    private $storage;
 
     /** @var LoggerInterface $logger */
     private $logger;
 
-    /** @var State $state */
-    private $state;
-
     /**
-     * @param Storage $fileSync
-     * @param LoggerInterface $logger
      * @param State $state
+     * @param Storage $storage
+     * @param LoggerInterface $logger
      * @return void
      */
     public function __construct(
-        Storage $fileSync,
-        LoggerInterface $logger,
-        State $state
+        State $state,
+        Storage $storage,
+        LoggerInterface $logger
     ) {
-        $this->fileSync = $fileSync;
-        $this->logger = $logger;
         $this->state = $state;
+        $this->storage = $storage;
+        $this->logger = $logger;
         parent::__construct();
     }
 
@@ -91,16 +91,19 @@ class SynchronizeCommand extends Command
             $this->state->setAreaCode(Area::AREA_ADMINHTML);
 
             /** @var Flag $flag */
-            $flag = $this->fileSync->getSyncFlag();
+            $flag = $this->storage->getSyncFlag();
 
-            if ($flag->getState() === Flag::STATE_RUNNING && $flag->getLastUpdate() && time() <= strtotime($flag->getLastUpdate()) + Flag::FLAG_TTL) {
+            /** @var int|string|null $lastUpdate */
+            $lastUpdate = $flag->getLastUpdate() ?: null;
+
+            if ($flag->getState() === Flag::STATE_RUNNING && !empty($lastUpdate) && time() <= strtotime($lastUpdate) + Flag::FLAG_TTL) {
                 return;
             }
 
             $flag->setState(Flag::STATE_RUNNING)->setFlagData([])->save();
 
             try {
-                $this->fileSync->synchronize([
+                $this->storage->synchronize([
                     'type' => StorageTypeMetadataInterface::STORAGE_MEDIA_GCS,
                 ]);
             } catch (Exception $e) {
