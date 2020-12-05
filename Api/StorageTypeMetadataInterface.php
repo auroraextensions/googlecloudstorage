@@ -1,6 +1,6 @@
 <?php
 /**
- * StorageMetadataInterface.php
+ * StorageTypeMetadataInterface.php
  *
  * NOTICE OF LICENSE
  *
@@ -20,7 +20,7 @@ namespace AuroraExtensions\GoogleCloudStorage\Api;
 
 use Google\Cloud\Storage\StorageClient;
 
-interface StorageMetadataInterface
+interface StorageTypeMetadataInterface
 {
     /** @constant int STORAGE_MEDIA_GCS */
     public const STORAGE_MEDIA_GCS = 2;

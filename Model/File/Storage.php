@@ -18,11 +18,11 @@ declare(strict_types=1);
 
 namespace AuroraExtensions\GoogleCloudStorage\Model\File;
 
-use AuroraExtensions\GoogleCloudStorage\Api\StorageMetadataInterface;
+use AuroraExtensions\GoogleCloudStorage\Api\StorageTypeMetadataInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\MediaStorage\Model\File\Storage as FileStorage;
 
-class Storage implements StorageMetadataInterface
+class Storage implements StorageTypeMetadataInterface
 {
     /** @var ScopeConfigInterface $scopeConfig */
     private $scopeConfig;

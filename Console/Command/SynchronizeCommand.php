@@ -19,7 +19,7 @@ declare(strict_types=1);
 namespace AuroraExtensions\GoogleCloudStorage\Console\Command;
 
 use Exception;
-use AuroraExtensions\GoogleCloudStorage\Api\StorageMetadataInterface;
+use AuroraExtensions\GoogleCloudStorage\Api\StorageTypeMetadataInterface;
 use Magento\Framework\{
     App\Area,
     App\State
@@ -34,6 +34,9 @@ use Symfony\Component\{
     Console\Input\InputInterface,
     Console\Output\OutputInterface
 };
+
+use function strtotime;
+use function time;
 
 class SynchronizeCommand extends Command
 {
@@ -98,7 +101,7 @@ class SynchronizeCommand extends Command
 
             try {
                 $this->fileSync->synchronize([
-                    'type' => StorageMetadataInterface::STORAGE_MEDIA_GCS,
+                    'type' => StorageTypeMetadataInterface::STORAGE_MEDIA_GCS,
                 ]);
             } catch (Exception $e) {
                 $this->logger->critical($e);
