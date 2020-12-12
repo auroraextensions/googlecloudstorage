@@ -42,7 +42,7 @@ class GoogleCloudStorage
 
     /**
      * @param Storage $subject
-     * @param AbstractModel|bool
+     * @param AbstractModel|bool $result
      * @param int|null $storage
      * @param array $params
      * @return AbstractModel|bool
