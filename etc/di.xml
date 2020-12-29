@@ -21,7 +21,7 @@
                 type="AuroraExtensions\GoogleCloudStorage\Model\Adapter\StorageObjectManagement"/>
 
     <virtualType name="AuroraExtensions\GoogleCloudStorage\Model\System\Source\Select\Bucket\Acl"
-                 type="AuroraExtensions\GoogleCloudStorage\Model\System\Source\Select\Generic">
+                 type="AuroraExtensions\ModuleComponents\Model\Config\Source\Select\VirtualSelect">
         <arguments>
             <argument name="data" xsi:type="array">
                 <item name="authenticatedRead" xsi:type="string" translatable="true">Authenticated Read</item>
@@ -35,7 +35,7 @@
         </arguments>
     </virtualType>
     <virtualType name="AuroraExtensions\GoogleCloudStorage\Model\System\Source\Select\Bucket\Region"
-                 type="AuroraExtensions\GoogleCloudStorage\Model\System\Source\Select\Generic">
+                 type="AuroraExtensions\ModuleComponents\Model\Config\Source\Select\VirtualSelect">
         <arguments>
             <argument name="data" xsi:type="array">
                 <item name="multi-region" xsi:type="string" translatable="true">Multi-region (multi-region)</item>
