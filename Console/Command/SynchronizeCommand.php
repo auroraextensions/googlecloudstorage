@@ -35,6 +35,7 @@ use Symfony\Component\{
     Console\Output\OutputInterface
 };
 
+use const null;
 use function strtotime;
 use function time;
 
