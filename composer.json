@@ -22,7 +22,8 @@
     "google/cloud-storage": "~1.14.0",
     "magento/framework": "^100||^101||^102||^103",
     "magento/module-media-storage": "^100||^101",
-    "magento/module-store": "^100||^101"
+    "magento/module-store": "^100||^101",
+    "auroraextensions/modulecomponents": "~100.0.0||~100.1.0"
   },
   "autoload": {
     "files": [
