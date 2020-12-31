@@ -24,6 +24,9 @@ use Magento\Store\{
     Model\Store
 };
 
+/**
+ * @deprecated 1.2.0
+ */
 class ModuleConfig
 {
     /** @constant string DEFAULT_ACL_POLICY */
