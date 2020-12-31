@@ -90,19 +90,20 @@ class ObjectAdapter
         $destination = null,
         $newName = null
     ) {
-        if ($destination !== null) {
+        if (!empty($destination)) {
             /** @var string $filePath */
             $filePath = $this->storageHelper->getMediaRelativePath($destination);
 
             /** @var string $objectPath */
-            $objectPath = $this->getStorage()->hasPrefix()
-                ? $this->getStorage()->getPrefixedFilePath($filePath)
-                : $filePath;
+            $objectPath = $this->getStorage()->getObjectPath($filePath);
+
+            /** @var string $aclPolicy */
+            $aclPolicy = $this->getStorage()->getObjectAclPolicy();
 
             /** @var array $options */
             $options = [
                 'name' => $objectPath,
-                'predefinedAcl' => $this->getConfig()->getBucketAclPolicy(),
+                'predefinedAcl' => $aclPolicy,
             ];
 
             try {

@@ -90,15 +90,16 @@ class FileProcessor
             ]);
         }
 
-        /** @var string $filePath */
-        $filePath = $this->getStorage()->hasPrefix()
-            ? $this->getStorage()->getPrefixedFilePath($filename)
-            : $filename;
+        /** @var string $objectPath */
+        $objectPath = $this->getStorage()->getObjectPath($filename);
+
+        /** @var string $aclPolicy */
+        $aclPolicy = $this->getStorage()->getObjectAclPolicy();
 
         try {
             $this->getStorage()->uploadObject($file['content'], [
-                'name' => $filePath,
-                'predefinedAcl' => $this->getConfig()->getBucketAclPolicy(),
+                'name' => $objectPath,
+                'predefinedAcl' => $aclPolicy,
             ]);
         } catch (Exception $e) {
             $this->logger->critical($e->getMessage());
