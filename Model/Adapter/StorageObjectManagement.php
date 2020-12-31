@@ -20,8 +20,15 @@ namespace AuroraExtensions\GoogleCloudStorage\Model\Adapter;
 
 use AuroraExtensions\GoogleCloudStorage\{
     Api\StorageObjectManagementInterface,
+    Api\StorageObjectPathResolverInterface,
     Component\ModuleConfigTrait,
+    Exception\InvalidGoogleCloudStorageSetupException,
     Model\System\ModuleConfig
+};
+use AuroraExtensions\ModuleComponents\{
+    Api\LocalizedScopeDeploymentConfigInterface,
+    Api\LocalizedScopeDeploymentConfigInterfaceFactory,
+    Exception\ExceptionFactory
 };
 use Google\Cloud\{
     Storage\Bucket,
@@ -40,6 +47,7 @@ use Psr\Http\{
 };
 
 use const DIRECTORY_SEPARATOR;
+use const null;
 use function implode;
 use function is_resource;
 use function is_string;
@@ -48,8 +56,9 @@ use function preg_replace;
 use function rtrim;
 use function str_replace;
 use function trim;
+use function __;
 
-class StorageObjectManagement implements StorageObjectManagementInterface
+class StorageObjectManagement implements StorageObjectManagementInterface, StorageObjectPathResolverInterface
 {
     /**
      * @var ModuleConfig $moduleConfig
@@ -60,8 +69,17 @@ class StorageObjectManagement implements StorageObjectManagementInterface
     /** @constant string DIRSEP_REGEX */
     private const DIRSEP_REGEX = '#//+#';
 
+    /** @var Bucket $bucket */
+    private $bucket;
+
     /** @var StorageClient $client */
     private $client;
+
+    /** @var LocalizedScopeDeploymentConfigInterface $deploymentConfig */
+    private $deploymentConfig;
+
+    /** @var ExceptionFactory $exceptionFactory */
+    private $exceptionFactory;
 
     /** @var FileDriver $fileDriver */
     private $fileDriver;
@@ -72,35 +90,83 @@ class StorageObjectManagement implements StorageObjectManagementInterface
     /** @var StreamInterfaceFactory $streamFactory */
     private $streamFactory;
 
+    /** @var bool $useModuleConfig */
+    private $useModuleConfig;
+
     /**
+     * @param LocalizedScopeDeploymentConfigInterfaceFactory $deploymentConfigFactory
+     * @param ExceptionFactory $exceptionFactory
      * @param FileDriver $fileDriver
      * @param Filesystem $filesystem
      * @param ModuleConfig $moduleConfig
      * @param StreamInterfaceFactory $streamFactory
+     * @param bool $useModuleConfig
      * @return void
      */
     public function __construct(
+        LocalizedScopeDeploymentConfigInterfaceFactory $deploymentConfigFactory,
+        ExceptionFactory $exceptionFactory,
         FileDriver $fileDriver,
         Filesystem $filesystem,
         ModuleConfig $moduleConfig,
-        StreamInterfaceFactory $streamFactory
+        StreamInterfaceFactory $streamFactory,
+        bool $useModuleConfig = false
     ) {
+        $this->deploymentConfig = $deploymentConfigFactory->create(['scope' => 'googlecloud']);
+        $this->exceptionFactory = $exceptionFactory;
         $this->fileDriver = $fileDriver;
         $this->filesystem = $filesystem;
         $this->moduleConfig = $moduleConfig;
         $this->streamFactory = $streamFactory;
-        $this->client = new StorageClient([
-            'projectId' => $moduleConfig->getGoogleCloudProject(),
-            'keyFilePath' => $this->getAbsolutePath($moduleConfig->getJsonKeyFilePath()),
-        ]);
+        $this->useModuleConfig = $useModuleConfig;
+        $this->initialize();
     }
 
     /**
-     * @return StorageClient
+     * @return void
+     * @throws InvalidGoogleCloudStorageSetupException
      */
-    public function getClient(): StorageClient
+    private function initialize(): void
     {
-        return $this->client;
+        /** @var string|null $projectName */
+        $projectName = $this->useModuleConfig
+            ? $this->getConfig()->getGoogleCloudProject()
+            : $this->deploymentConfig->get('storage/project_name');
+
+        /** @var string|null $keyFilePath */
+        $keyFilePath = $this->useModuleConfig
+            ? $this->getConfig()->getJsonKeyFilePath()
+            : $this->deploymentConfig->get('storage/key_file_path');
+
+        if (!empty($projectName) && !empty($keyFilePath)) {
+            $this->client = new StorageClient([
+                'projectId' => $projectName,
+                'keyFilePath' => $this->getAbsolutePath($keyFilePath),
+            ]);
+
+            /** @var string|null $bucketName */
+            $bucketName = $this->useModuleConfig
+                ? $this->getConfig()->getBucketName()
+                : $this->deploymentConfig->get('storage/bucket/name');
+
+            if (!empty($bucketName)) {
+                $this->bucket = $this->client->bucket($bucketName);
+            } else {
+                /** @var InvalidGoogleCloudStorageSetupException $exception */
+                $exception = $this->exceptionFactory->create(
+                    InvalidGoogleCloudStorageSetupException::class,
+                    __('Bucket name is invalid')
+                );
+                throw $exception;
+            }
+        } else {
+            /** @var InvalidGoogleCloudStorageSetupException $exception */
+            $exception = $this->exceptionFactory->create(
+                InvalidGoogleCloudStorageSetupException::class,
+                __('Project name and/or key file path is invalid')
+            );
+            throw $exception;
+        }
     }
 
     /**
