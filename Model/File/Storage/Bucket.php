@@ -31,8 +31,10 @@ use Google\Cloud\{
     Storage\ObjectIterator
 };
 use Magento\Framework\{
+    App\Filesystem\DirectoryList,
     Exception\LocalizedException,
-    Filesystem\Driver\File as FilesystemDriver,
+    Filesystem,
+    Filesystem\Driver\File as FileDriver,
     Model\AbstractModel,
     Phrase
 };
@@ -40,6 +42,7 @@ use Magento\MediaStorage\Helper\File\Storage\Database as StorageHelper;
 use Psr\Log\LoggerInterface;
 
 use const DIRECTORY_SEPARATOR;
+use const null;
 use function implode;
 use function iterator_count;
 use function ltrim;
@@ -61,8 +64,11 @@ class Bucket extends AbstractModel
     /** @var ExceptionFactory $exceptionFactory */
     private $exceptionFactory;
 
-    /** @var FilesystemDriver $filesystemDriver */
-    private $filesystemDriver;
+    /** @var FileDriver $fileDriver */
+    private $fileDriver;
+
+    /** @var Filesystem $filesystem */
+    private $filesystem;
 
     /** @var LoggerInterface $logger */
     private $logger;
@@ -75,7 +81,8 @@ class Bucket extends AbstractModel
 
     /**
      * @param ExceptionFactory $exceptionFactory
-     * @param FilesystemDriver $filesystemDriver
+     * @param FileDriver $fileDriver
+     * @param Filesystem $filesystem
      * @param LoggerInterface $logger
      * @param ModuleConfig $moduleConfig
      * @param StorageHelper $storageHelper
@@ -84,14 +91,16 @@ class Bucket extends AbstractModel
      */
     public function __construct(
         ExceptionFactory $exceptionFactory,
-        FilesystemDriver $filesystemDriver,
+        FileDriver $fileDriver,
+        Filesystem $filesystem,
         LoggerInterface $logger,
         ModuleConfig $moduleConfig,
         StorageHelper $storageHelper,
         StorageObjectManagementInterface $storageAdapter
     ) {
         $this->exceptionFactory = $exceptionFactory;
-        $this->filesystemDriver = $filesystemDriver;
+        $this->fileDriver = $fileDriver;
+        $this->filesystem = $filesystem;
         $this->logger = $logger;
         $this->moduleConfig = $moduleConfig;
         $this->storageHelper = $storageHelper;
@@ -173,7 +182,7 @@ class Bucket extends AbstractModel
      * @param int $offset
      * @param int $count
      * @return bool
-     * @see Magento\MediaStorage\Model\File\Storage\File::exportDirectories()
+     * @see \Magento\MediaStorage\Model\File\Storage\File::exportDirectories()
      */
     public function exportDirectories(
         int $offset = 0,
@@ -216,7 +225,7 @@ class Bucket extends AbstractModel
             /** @var string $name */
             $name = $object->name();
 
-            if (strlen($name) && $name[0] !== DIRECTORY_SEPARATOR) {
+            if (!empty($name) && $name[0] !== DIRECTORY_SEPARATOR) {
                 $files[] = [
                     'filename' => $name,
                     'content'  => $object->downloadAsString(),
@@ -247,20 +256,15 @@ class Bucket extends AbstractModel
             /** @var string $filePath */
             $filePath = $this->getFilePath($file['filename'], $file['directory']);
 
-            /** @var string $content */
-            $content = $file['content'];
-
             /** @var string $relativePath */
-            $relativePath = $this->storageHelper
-                ->getMediaRelativePath($filePath);
+            $relativePath = $this->storageHelper->getMediaRelativePath($filePath);
 
             try {
                 /** @var string $aclPolicy */
-                $aclPolicy = $this->getConfig()
-                    ->getBucketAclPolicy();
+                $aclPolicy = $this->getStorage()->getObjectAclPolicy();
 
                 /* Upload file object to bucket. */
-                $this->getStorage()->uploadObject($content, [
+                $this->getStorage()->uploadObject($file['content'], [
                     'name' => $relativePath,
                     'predefinedAcl' => $aclPolicy,
                 ]);
@@ -271,7 +275,6 @@ class Bucket extends AbstractModel
                         LocalizedException::class,
                         __('Unable to save file: %1', $filePath)
                     );
-
                     throw $exception;
                 }
             } catch (LocalizedException | Exception $e) {
@@ -290,26 +293,27 @@ class Bucket extends AbstractModel
     public function saveFile(string $filename)
     {
         /** @var string $mediaPath */
-        $mediaPath = $this->getStorage()
-            ->getMediaBaseDirectory();
+        $mediaPath = $this->filesystem
+            ->getDirectoryRead(DirectoryList::MEDIA)
+            ->getAbsolutePath();
 
         /** @var string $filePath */
-        $filePath = $this->getFilePath(
-            $filename,
-            $mediaPath
-        );
+        $filePath = $this->getFilePath($filename, $mediaPath);
 
         try {
             /** @var resource $handle */
-            $handle = $this->filesystemDriver->fileOpen($filePath, 'r');
+            $handle = $this->fileDriver->fileOpen($filePath, 'r');
 
             /** @var string $relativePath */
             $relativePath = $this->storageHelper->getMediaRelativePath($filePath);
 
+            /** @var string $aclPolicy */
+            $aclPolicy = $this->getStorage()->getObjectAclPolicy();
+
             /* Upload file object to bucket. */
             $this->getStorage()->uploadObject($handle, [
                 'name' => $relativePath,
-                'predefinedAcl' => $this->getConfig()->getBucketAclPolicy(),
+                'predefinedAcl' => $aclPolicy,
             ]);
 
             if (!$this->getStorage()->objectExists($relativePath)) {
@@ -318,7 +322,6 @@ class Bucket extends AbstractModel
                     LocalizedException::class,
                     __('Unable to save file: %1', $filePath)
                 );
-
                 throw $exception;
             }
         } catch (LocalizedException | Exception $e) {
