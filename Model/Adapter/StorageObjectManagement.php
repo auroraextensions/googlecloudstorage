@@ -170,25 +170,58 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
     }
 
     /**
-     * @return Bucket|null
+     * @param string $path
+     * @return string|null
      */
-    public function getBucket(): ?Bucket
+    private function getAbsolutePath(string $path): ?string
     {
-        return $this->getClient()
-            ->bucket($this->getConfig()->getBucketName());
+        if (!empty($path) && $path[0] !== DIRECTORY_SEPARATOR) {
+            /** @var string $basePath */
+            $basePath = $this->filesystem
+                ->getDirectoryRead(DirectoryList::ROOT)
+                ->getAbsolutePath();
+
+            /** @var string $filePath */
+            $filePath = implode(DIRECTORY_SEPARATOR, [
+                rtrim($basePath, DIRECTORY_SEPARATOR),
+                '',
+                rtrim($path, DIRECTORY_SEPARATOR),
+            ]);
+
+            /** @var string $realPath */
+            $realPath = $this->fileDriver->getRealPath($filePath);
+            return $this->fileDriver->isFile($realPath) ? $realPath : null;
+        }
+
+        return !empty($path) ? $path : null;
+    }
+
+    /**
+     * @return string
+     */
+    private function getMediaBaseDirectory(): string
+    {
+        return $this->filesystem
+            ->getDirectoryRead(DirectoryList::MEDIA)
+            ->getAbsolutePath();
     }
 
     /**
      * @return string|null
      */
-    public function getPrefix(): ?string
+    private function getPrefix(): ?string
     {
+        /** @var string|null $config */
+        $config = $this->useModuleConfig
+            ? $this->getConfig()->getBucketPrefix()
+            : $this->deploymentConfig->get('storage/bucket/prefix');
+
+        if (empty($config)) {
+            return null;
+        }
+
         /** @var string $prefix */
-        $prefix = preg_replace(
-            self::DIRSEP_REGEX,
-            DIRECTORY_SEPARATOR,
-            $this->getConfig()->getBucketPrefix()
-        );
+        $prefix = preg_replace(self::DIRSEP_REGEX, DIRECTORY_SEPARATOR, $config);
 
         if (!empty($prefix) && $prefix[0] === DIRECTORY_SEPARATOR) {
             $prefix = ltrim($prefix, DIRECTORY_SEPARATOR);
@@ -198,31 +231,24 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
     }
 
     /**
-     * @param string $path
-     * @return string
+     * @return bool
      */
-    public function getPrefixedFilePath(string $path): string
+    private function hasPrefix(): bool
     {
-        return implode(DIRECTORY_SEPARATOR, [
-            '',
-            trim($this->getPrefix(), DIRECTORY_SEPARATOR),
-            trim($path, DIRECTORY_SEPARATOR),
-        ]);
+        /** @var string|null $prefix */
+        $prefix = $this->useModuleConfig
+            ? $this->getConfig()->getBucketPrefix()
+            : $this->deploymentConfig->get('storage/bucket/prefix');
+
+        return !empty($prefix);
     }
 
     /**
-     * @return bool
+     * {@inheritdoc}
      */
-    public function hasPrefix(): bool
+    public function getClient(): StorageClient
     {
-        /** @var string|null $prefix */
-        $prefix = $this->getConfig()->getBucketPrefix();
-
-        if (!empty($prefix)) {
-            return true;
-        }
-
-        return false;
+        return $this->client;
     }
 
     /**
@@ -230,9 +256,6 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
      */
     public function getObject(string $path): ?StorageObject
     {
-        /** @var Bucket $bucket */
-        $bucket = $this->getBucket();
-
         if ($this->hasPrefix()) {
             $path = implode(DIRECTORY_SEPARATOR, [
                 $this->getPrefix(),
@@ -240,7 +263,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
             ]);
         }
 
-        return $bucket->object($path);
+        return $this->bucket->object($path);
     }
 
     /**
@@ -248,9 +271,6 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
      */
     public function getObjects(array $options = []): ?ObjectIterator
     {
-        /** @var Bucket $bucket */
-        $bucket = $this->getBucket();
-
         if ($this->hasPrefix()) {
             /** @var string $prefix */
             $prefix = $this->getPrefix();
@@ -265,7 +285,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
             }
         }
 
-        return $bucket->objects($options);
+        return $this->bucket->objects($options);
     }
 
     /**
@@ -275,8 +295,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
     {
         /** @var StorageObject|null $object */
         $object = $this->getObject($path);
-
-        return ($object && $object->exists());
+        return ($object !== null && $object->exists());
     }
 
     /**
@@ -322,7 +341,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
             }
         }
 
-        return $this->getBucket()->upload($handle, $options);
+        return $this->bucket->upload($handle, $options);
     }
 
     /**
@@ -405,39 +424,32 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
      */
-    public function getMediaBaseDirectory(): string
+    public function getObjectPath(string $path): string
     {
-        return $this->filesystem
-            ->getDirectoryRead(DirectoryList::MEDIA)
-            ->getAbsolutePath();
+        /** @var array $parts */
+        $parts[] = '';
+
+        if ($this->hasPrefix()) {
+            $parts[] = trim($this->getPrefix(), DIRECTORY_SEPARATOR);
+        }
+
+        $parts[] = trim($path, DIRECTORY_SEPARATOR);
+        return implode(DIRECTORY_SEPARATOR, $parts);
     }
 
     /**
-     * @param string $path
-     * @return string|null
+     * @return string
+     * @deprecated Serves as stopgap during ModuleConfig deprecation. Will be removed in near-term release.
      */
-    private function getAbsolutePath(string $path): ?string
+    public function getObjectAclPolicy(): string
     {
-        if (!empty($path) && $path[0] !== DIRECTORY_SEPARATOR) {
-            /** @var string $basePath */
-            $basePath = $this->filesystem
-                ->getDirectoryRead(DirectoryList::ROOT)
-                ->getAbsolutePath();
+        /** @var string|null $aclPolicy */
+        $aclPolicy = $this->useModuleConfig
+            ? $this->getConfig()->getBucketAclPolicy()
+            : $this->deploymentConfig->get('storage/bucket/acl');
 
-            /** @var string $filePath */
-            $filePath = implode(DIRECTORY_SEPARATOR, [
-                rtrim($basePath, DIRECTORY_SEPARATOR),
-                '',
-                rtrim($path, DIRECTORY_SEPARATOR),
-            ]);
-
-            /** @var string $realPath */
-            $realPath = $this->fileDriver->getRealPath($filePath);
-            return $this->fileDriver->isFile($realPath) ? $realPath : null;
-        }
-
-        return !empty($path) ? $path : null;
+        return !empty($aclPolicy) ? $aclPolicy : ModuleConfig::DEFAULT_ACL_POLICY;
     }
 }
