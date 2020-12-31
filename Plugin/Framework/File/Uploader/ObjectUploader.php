@@ -115,14 +115,15 @@ class ObjectUploader
         $filePath = $this->storageHelper->getMediaRelativePath($path);
 
         /** @var string $objectPath */
-        $objectPath = $this->getStorage()->hasPrefix()
-            ? $this->getStorage()->getPrefixedFilePath($filePath)
-            : $filePath;
+        $objectPath = $this->getStorage()->getObjectPath($filePath);
+
+        /** @var string $aclPolicy */
+        $aclPolicy = $this->getStorage()->getObjectAclPolicy();
 
         /** @var array $options */
         $options = [
             'name' => $objectPath,
-            'predefinedAcl' => $this->getConfig()->getBucketAclPolicy(),
+            'predefinedAcl' => $aclPolicy,
         ];
 
         try {

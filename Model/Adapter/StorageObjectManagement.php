@@ -20,8 +20,15 @@ namespace AuroraExtensions\GoogleCloudStorage\Model\Adapter;
 
 use AuroraExtensions\GoogleCloudStorage\{
     Api\StorageObjectManagementInterface,
+    Api\StorageObjectPathResolverInterface,
     Component\ModuleConfigTrait,
+    Exception\InvalidGoogleCloudStorageSetupException,
     Model\System\ModuleConfig
+};
+use AuroraExtensions\ModuleComponents\{
+    Api\LocalizedScopeDeploymentConfigInterface,
+    Api\LocalizedScopeDeploymentConfigInterfaceFactory,
+    Exception\ExceptionFactory
 };
 use Google\Cloud\{
     Storage\Bucket,
@@ -40,6 +47,7 @@ use Psr\Http\{
 };
 
 use const DIRECTORY_SEPARATOR;
+use const null;
 use function implode;
 use function is_resource;
 use function is_string;
@@ -48,8 +56,9 @@ use function preg_replace;
 use function rtrim;
 use function str_replace;
 use function trim;
+use function __;
 
-class StorageObjectManagement implements StorageObjectManagementInterface
+class StorageObjectManagement implements StorageObjectManagementInterface, StorageObjectPathResolverInterface
 {
     /**
      * @var ModuleConfig $moduleConfig
@@ -60,8 +69,17 @@ class StorageObjectManagement implements StorageObjectManagementInterface
     /** @constant string DIRSEP_REGEX */
     private const DIRSEP_REGEX = '#//+#';
 
+    /** @var Bucket $bucket */
+    private $bucket;
+
     /** @var StorageClient $client */
     private $client;
+
+    /** @var LocalizedScopeDeploymentConfigInterface $deploymentConfig */
+    private $deploymentConfig;
+
+    /** @var ExceptionFactory $exceptionFactory */
+    private $exceptionFactory;
 
     /** @var FileDriver $fileDriver */
     private $fileDriver;
@@ -72,57 +90,138 @@ class StorageObjectManagement implements StorageObjectManagementInterface
     /** @var StreamInterfaceFactory $streamFactory */
     private $streamFactory;
 
+    /** @var bool $useModuleConfig */
+    private $useModuleConfig;
+
     /**
+     * @param LocalizedScopeDeploymentConfigInterfaceFactory $deploymentConfigFactory
+     * @param ExceptionFactory $exceptionFactory
      * @param FileDriver $fileDriver
      * @param Filesystem $filesystem
      * @param ModuleConfig $moduleConfig
      * @param StreamInterfaceFactory $streamFactory
+     * @param bool $useModuleConfig
      * @return void
      */
     public function __construct(
+        LocalizedScopeDeploymentConfigInterfaceFactory $deploymentConfigFactory,
+        ExceptionFactory $exceptionFactory,
         FileDriver $fileDriver,
         Filesystem $filesystem,
         ModuleConfig $moduleConfig,
-        StreamInterfaceFactory $streamFactory
+        StreamInterfaceFactory $streamFactory,
+        bool $useModuleConfig = false
     ) {
+        $this->deploymentConfig = $deploymentConfigFactory->create(['scope' => 'googlecloud']);
+        $this->exceptionFactory = $exceptionFactory;
         $this->fileDriver = $fileDriver;
         $this->filesystem = $filesystem;
         $this->moduleConfig = $moduleConfig;
         $this->streamFactory = $streamFactory;
-        $this->client = new StorageClient([
-            'projectId' => $moduleConfig->getGoogleCloudProject(),
-            'keyFilePath' => $this->getAbsolutePath($moduleConfig->getJsonKeyFilePath()),
-        ]);
+        $this->useModuleConfig = $useModuleConfig;
+        $this->initialize();
     }
 
     /**
-     * @return StorageClient
+     * @return void
+     * @throws InvalidGoogleCloudStorageSetupException
      */
-    public function getClient(): StorageClient
+    private function initialize(): void
     {
-        return $this->client;
+        /** @var string|null $projectName */
+        $projectName = $this->useModuleConfig
+            ? $this->getConfig()->getGoogleCloudProject()
+            : $this->deploymentConfig->get('storage/project_name');
+
+        /** @var string|null $keyFilePath */
+        $keyFilePath = $this->useModuleConfig
+            ? $this->getConfig()->getJsonKeyFilePath()
+            : $this->deploymentConfig->get('storage/key_file_path');
+
+        if (!empty($projectName) && !empty($keyFilePath)) {
+            $this->client = new StorageClient([
+                'projectId' => $projectName,
+                'keyFilePath' => $this->getAbsolutePath($keyFilePath),
+            ]);
+
+            /** @var string|null $bucketName */
+            $bucketName = $this->useModuleConfig
+                ? $this->getConfig()->getBucketName()
+                : $this->deploymentConfig->get('storage/bucket/name');
+
+            if (!empty($bucketName)) {
+                $this->bucket = $this->client->bucket($bucketName);
+            } else {
+                /** @var InvalidGoogleCloudStorageSetupException $exception */
+                $exception = $this->exceptionFactory->create(
+                    InvalidGoogleCloudStorageSetupException::class,
+                    __('Bucket name is invalid')
+                );
+                throw $exception;
+            }
+        } else {
+            /** @var InvalidGoogleCloudStorageSetupException $exception */
+            $exception = $this->exceptionFactory->create(
+                InvalidGoogleCloudStorageSetupException::class,
+                __('Project name and/or key file path is invalid')
+            );
+            throw $exception;
+        }
     }
 
     /**
-     * @return Bucket|null
+     * @param string $path
+     * @return string|null
      */
-    public function getBucket(): ?Bucket
+    private function getAbsolutePath(string $path): ?string
     {
-        return $this->getClient()
-            ->bucket($this->getConfig()->getBucketName());
+        if (!empty($path) && $path[0] !== DIRECTORY_SEPARATOR) {
+            /** @var string $basePath */
+            $basePath = $this->filesystem
+                ->getDirectoryRead(DirectoryList::ROOT)
+                ->getAbsolutePath();
+
+            /** @var string $filePath */
+            $filePath = implode(DIRECTORY_SEPARATOR, [
+                rtrim($basePath, DIRECTORY_SEPARATOR),
+                '',
+                rtrim($path, DIRECTORY_SEPARATOR),
+            ]);
+
+            /** @var string $realPath */
+            $realPath = $this->fileDriver->getRealPath($filePath);
+            return $this->fileDriver->isFile($realPath) ? $realPath : null;
+        }
+
+        return !empty($path) ? $path : null;
+    }
+
+    /**
+     * @return string
+     */
+    private function getMediaBaseDirectory(): string
+    {
+        return $this->filesystem
+            ->getDirectoryRead(DirectoryList::MEDIA)
+            ->getAbsolutePath();
     }
 
     /**
      * @return string|null
      */
-    public function getPrefix(): ?string
+    private function getPrefix(): ?string
     {
+        /** @var string|null $config */
+        $config = $this->useModuleConfig
+            ? $this->getConfig()->getBucketPrefix()
+            : $this->deploymentConfig->get('storage/bucket/prefix');
+
+        if (empty($config)) {
+            return null;
+        }
+
         /** @var string $prefix */
-        $prefix = preg_replace(
-            self::DIRSEP_REGEX,
-            DIRECTORY_SEPARATOR,
-            $this->getConfig()->getBucketPrefix()
-        );
+        $prefix = preg_replace(self::DIRSEP_REGEX, DIRECTORY_SEPARATOR, $config);
 
         if (!empty($prefix) && $prefix[0] === DIRECTORY_SEPARATOR) {
             $prefix = ltrim($prefix, DIRECTORY_SEPARATOR);
@@ -132,31 +231,24 @@ class StorageObjectManagement implements StorageObjectManagementInterface
     }
 
     /**
-     * @param string $path
-     * @return string
+     * @return bool
      */
-    public function getPrefixedFilePath(string $path): string
+    private function hasPrefix(): bool
     {
-        return implode(DIRECTORY_SEPARATOR, [
-            '',
-            trim($this->getPrefix(), DIRECTORY_SEPARATOR),
-            trim($path, DIRECTORY_SEPARATOR),
-        ]);
+        /** @var string|null $prefix */
+        $prefix = $this->useModuleConfig
+            ? $this->getConfig()->getBucketPrefix()
+            : $this->deploymentConfig->get('storage/bucket/prefix');
+
+        return !empty($prefix);
     }
 
     /**
-     * @return bool
+     * {@inheritdoc}
      */
-    public function hasPrefix(): bool
+    public function getClient(): StorageClient
     {
-        /** @var string|null $prefix */
-        $prefix = $this->getConfig()->getBucketPrefix();
-
-        if (!empty($prefix)) {
-            return true;
-        }
-
-        return false;
+        return $this->client;
     }
 
     /**
@@ -164,9 +256,6 @@ class StorageObjectManagement implements StorageObjectManagementInterface
      */
     public function getObject(string $path): ?StorageObject
     {
-        /** @var Bucket $bucket */
-        $bucket = $this->getBucket();
-
         if ($this->hasPrefix()) {
             $path = implode(DIRECTORY_SEPARATOR, [
                 $this->getPrefix(),
@@ -174,7 +263,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface
             ]);
         }
 
-        return $bucket->object($path);
+        return $this->bucket->object($path);
     }
 
     /**
@@ -182,9 +271,6 @@ class StorageObjectManagement implements StorageObjectManagementInterface
      */
     public function getObjects(array $options = []): ?ObjectIterator
     {
-        /** @var Bucket $bucket */
-        $bucket = $this->getBucket();
-
         if ($this->hasPrefix()) {
             /** @var string $prefix */
             $prefix = $this->getPrefix();
@@ -199,7 +285,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface
             }
         }
 
-        return $bucket->objects($options);
+        return $this->bucket->objects($options);
     }
 
     /**
@@ -209,8 +295,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface
     {
         /** @var StorageObject|null $object */
         $object = $this->getObject($path);
-
-        return ($object && $object->exists());
+        return ($object !== null && $object->exists());
     }
 
     /**
@@ -256,7 +341,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface
             }
         }
 
-        return $this->getBucket()->upload($handle, $options);
+        return $this->bucket->upload($handle, $options);
     }
 
     /**
@@ -339,39 +424,32 @@ class StorageObjectManagement implements StorageObjectManagementInterface
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
      */
-    public function getMediaBaseDirectory(): string
+    public function getObjectPath(string $path): string
     {
-        return $this->filesystem
-            ->getDirectoryRead(DirectoryList::MEDIA)
-            ->getAbsolutePath();
+        /** @var array $parts */
+        $parts[] = '';
+
+        if ($this->hasPrefix()) {
+            $parts[] = trim($this->getPrefix(), DIRECTORY_SEPARATOR);
+        }
+
+        $parts[] = trim($path, DIRECTORY_SEPARATOR);
+        return implode(DIRECTORY_SEPARATOR, $parts);
     }
 
     /**
-     * @param string $path
-     * @return string|null
+     * @return string
+     * @deprecated Serves as stopgap during ModuleConfig deprecation. Will be removed in near-term release.
      */
-    private function getAbsolutePath(string $path): ?string
+    public function getObjectAclPolicy(): string
     {
-        if (!empty($path) && $path[0] !== DIRECTORY_SEPARATOR) {
-            /** @var string $basePath */
-            $basePath = $this->filesystem
-                ->getDirectoryRead(DirectoryList::ROOT)
-                ->getAbsolutePath();
+        /** @var string|null $aclPolicy */
+        $aclPolicy = $this->useModuleConfig
+            ? $this->getConfig()->getBucketAclPolicy()
+            : $this->deploymentConfig->get('storage/bucket/acl');
 
-            /** @var string $filePath */
-            $filePath = implode(DIRECTORY_SEPARATOR, [
-                rtrim($basePath, DIRECTORY_SEPARATOR),
-                '',
-                rtrim($path, DIRECTORY_SEPARATOR),
-            ]);
-
-            /** @var string $realPath */
-            $realPath = $this->fileDriver->getRealPath($filePath);
-            return $this->fileDriver->isFile($realPath) ? $realPath : null;
-        }
-
-        return !empty($path) ? $path : null;
+        return !empty($aclPolicy) ? $aclPolicy : ModuleConfig::DEFAULT_ACL_POLICY;
     }
 }
