@@ -10,9 +10,9 @@
  * It is also available on the Internet at the following URL:
  * https://docs.auroraextensions.com/magento/extensions/2.x/googlecloudstorage/LICENSE.txt
  *
- * @package       AuroraExtensions\GoogleCloudStorage\Model\File\Storage
- * @copyright     Copyright (C) 2019 Aurora Extensions <support@auroraextensions.com>
- * @license       MIT
+ * @package     AuroraExtensions\GoogleCloudStorage\Model\File\Storage
+ * @copyright   Copyright (C) 2021 Aurora Extensions <support@auroraextensions.com>
+ * @license     MIT
  */
 declare(strict_types=1);
 
@@ -42,7 +42,6 @@ use Magento\MediaStorage\Helper\File\Storage\Database as StorageHelper;
 use Psr\Log\LoggerInterface;
 
 use const DIRECTORY_SEPARATOR;
-use const null;
 use function implode;
 use function iterator_count;
 use function ltrim;
