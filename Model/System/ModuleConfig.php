@@ -25,7 +25,9 @@ use Magento\Store\{
 };
 
 /**
- * @deprecated 1.2.0
+ * @deprecated 1.2.0 Starting in v1.2.0, an environment deployment configuration is required to supplant the current use of system configuration values.
+ *                   An example configuration is available on {@link https://github.com/auroraextensions/googlecloudstorage/blob/master/env.php.sample GitHub}.
+ *                   This class will be removed in minor release 1.3.0 and should not be relied upon in future development.
  */
 class ModuleConfig
 {

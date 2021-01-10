@@ -441,7 +441,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
 
     /**
      * @return string
-     * @deprecated Serves as stopgap during ModuleConfig deprecation. Will be removed in near-term release.
+     * @deprecated Serves as stopgap during {@see ModuleConfig} deprecation.
      */
     public function getObjectAclPolicy(): string
     {
