@@ -102,4 +102,9 @@
                 type="AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\File\Storage\FileProcessor"
                 sortOrder="10"/>
     </type>
+    <type name="Magento\MediaStorage\Block\System\Config\System\Storage\Media\Synchronize">
+        <plugin name="googlecloudstorage_mediastorage_configuration_sync_storage_params"
+                type="AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\Config\SynchronizeStorageParams"
+                sortOrder="10"/>
+    </type>
 </config>
