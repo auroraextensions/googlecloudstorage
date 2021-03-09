@@ -29,22 +29,22 @@ We highly recommend installing via Composer for package management.
 
     composer require auroraextensions/googlecloudstorage
 
-Once installed, enable the module with the Magento autoloader.
-
-.. code-block:: sh
-
-    php bin/magento module:enable AuroraExtensions_GoogleCloudStorage
-
 Configuration
 -------------
 
-Once installed and enabled, make sure to activate the module from the backend. You will need the
-following information readily available to complete the configuration process:
+Once installed, update the environment configuration file. See |link5|_ for an example.
+The following information should be readily available:
 
 1. Google Cloud project ID
 2. Path to the Google Cloud service account JSON key file. See `Service Account`_ for more details.
 3. Google Cloud Storage bucket name
 4. Google Cloud Storage bucket region (if applicable)
+
+Next, enable the module with the Magento autoloader.
+
+.. code-block:: sh
+
+    php bin/magento module:enable AuroraExtensions_GoogleCloudStorage
 
 Synchronization
 ---------------
