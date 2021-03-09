@@ -28,20 +28,52 @@
             <resource>AuroraExtensions_GoogleCloudStorage::configuration</resource>
             <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>General Settings</label>
+                <field id="deprecations" translate="label" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <comment>
+                        <![CDATA[
+                            Saving Google Cloud project metadata via system configuration is deprecated.
+                            Please use an environment deployment configuration instead.
+                            An example <a href="https://github.com/auroraextensions/googlecloudstorage/blob/master/env.php.sample" target="_blank">env.php</a> is available on GitHub.
+
+                            <style>
+                                #row_googlecloudstorage_general_deprecations .label {
+                                    display: inline-block;
+                                    margin: 0;
+                                    padding: 0;
+                                    visibility: hidden;
+                                    width: 0px;
+                                }
+
+                                #row_googlecloudstorage_general_deprecations .value input,
+                                #row_googlecloudstorage_general_deprecations td:last-child {
+                                    display: none;
+                                }
+
+                                #row_googlecloudstorage_general_deprecations .value .note > span {
+                                    border-left: 5px solid #f81;
+                                    border-radius: 3px;
+                                    display: inline-block;
+                                    font-size: 1.25rem;
+                                    padding-left: 5px;
+                                }
+                            </style>
+                        ]]>
+                    </comment>
+                </field>
                 <field id="enable" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Enable Google Cloud Storage</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="gcp_project" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Google Cloud Platform Project</label>
-                    <comment>The name of the GCP project for the bucket.</comment>
+                    <comment>Name of the Google Cloud project for the bucket.</comment>
                     <depends>
                         <field id="enable">1</field>
                     </depends>
                 </field>
                 <field id="key_file_path" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>JSON Key File Path</label>
-                    <comment>The path to the JSON key file to use for authentication with Google Cloud Storage APIs.</comment>
+                    <comment>Path to JSON key file to use for authentication with Google Cloud APIs.</comment>
                     <depends>
                         <field id="enable">1</field>
                     </depends>
@@ -51,7 +83,7 @@
                 <label>Bucket Settings</label>
                 <field id="name" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Bucket Name</label>
-                    <comment>The unique name given to the GCS bucket.</comment>
+                    <comment>Unique name given to the GCS bucket.</comment>
                     <validate>required-entry</validate>
                 </field>
                 <field id="prefix" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
@@ -60,11 +92,7 @@
                 </field>
                 <field id="acl" translate="label comment" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Bucket ACL Policy</label>
-                    <comment>
-                        <![CDATA[
-                            The predefined ACL policy for bucket file objects. See <a href="https://cloud.google.com/storage/docs/access-control/lists#predefined-acl" target="_blank">here</a> for documentation.
-                        ]]>
-                    </comment>
+                    <comment><![CDATA[Predefined ACL policy for bucket file objects. See <a href="https://cloud.google.com/storage/docs/access-control/lists#predefined-acl" target="_blank">here</a> for documentation.]]></comment>
                     <source_model>AuroraExtensions\GoogleCloudStorage\Model\System\Source\Select\Bucket\Acl</source_model>
                 </field>
                 <field id="region" translate="label comment" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
