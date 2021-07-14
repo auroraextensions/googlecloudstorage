@@ -1,5 +1,5 @@
 {
-  "name": "auroraextensions/googlecloudstorage",
+  "name": "outeredge/googlecloudstorage",
   "description": "Google Cloud Storage integration for Magento.",
   "type": "magento2-module",
   "license": "MIT",
