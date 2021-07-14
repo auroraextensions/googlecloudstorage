@@ -95,7 +95,7 @@ class ObjectUploader
             $baseName = $result['file'] ?? '';
 
             /** @var string $realPath */
-            $realPath = $basePath . $baseName;
+            $realPath = $basePath . DIRECTORY_SEPARATOR . $baseName;
 
             if (!empty($realPath)) {
                 $this->upload($realPath);
