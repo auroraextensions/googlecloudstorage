@@ -25,6 +25,7 @@ use AuroraExtensions\GoogleCloudStorage\{
     Component\StorageAdapterTrait,
     Model\System\ModuleConfig
 };
+use AuroraExtensions\ModuleComponents\Model\Utils\PathUtils;
 use Magento\Framework\{
     Exception\FileSystemException,
     File\Uploader,
@@ -37,8 +38,9 @@ class ObjectUploader
 {
     /**
      * @var ModuleConfig $moduleConfig
-     * @var StorageObjectManagementInterface $storageAdapter
      * @method ModuleConfig getConfig()
+     * ---
+     * @var StorageObjectManagementInterface $storageAdapter
      * @method StorageObjectManagementInterface getStorage()
      */
     use ModuleConfigTrait, StorageAdapterTrait;
@@ -49,6 +51,9 @@ class ObjectUploader
     /** @var LoggerInterface $logger */
     private $logger;
 
+    /** @var PathUtils $pathUtils */
+    private $pathUtils;
+
     /** @var StorageHelper $storageHelper */
     private $storageHelper;
 
@@ -56,6 +61,7 @@ class ObjectUploader
      * @param FileDriver $fileDriver
      * @param LoggerInterface $logger
      * @param ModuleConfig $moduleConfig
+     * @param PathUtils $pathUtils
      * @param StorageObjectManagementInterface $storageAdapter
      * @param StorageHelper $storageHelper
      * @return void
@@ -64,12 +70,14 @@ class ObjectUploader
         FileDriver $fileDriver,
         LoggerInterface $logger,
         ModuleConfig $moduleConfig,
+        PathUtils $pathUtils,
         StorageObjectManagementInterface $storageAdapter,
         StorageHelper $storageHelper
     ) {
         $this->fileDriver = $fileDriver;
         $this->logger = $logger;
         $this->moduleConfig = $moduleConfig;
+        $this->pathUtils = $pathUtils;
         $this->storageAdapter = $storageAdapter;
         $this->storageHelper = $storageHelper;
     }
@@ -89,15 +97,14 @@ class ObjectUploader
     ) {
         if (!empty($result)) {
             /** @var string $basePath */
-            $basePath = $result['path'] ?? '';
+            $basePath = (string)($result['path'] ?? '');
 
             /** @var string $baseName */
-            $baseName = $result['file'] ?? '';
+            $baseName = (string)($result['file'] ?? '');
 
-            /** @var string $realPath */
-            $realPath = $basePath . DIRECTORY_SEPARATOR . $baseName;
-
-            if (!empty($realPath)) {
+            if (!empty($basePath) && !empty($baseName)) {
+                /** @var string $realPath */
+                $realPath = $this->pathUtils->build($basePath, $baseName);
                 $this->upload($realPath);
             }
         }
