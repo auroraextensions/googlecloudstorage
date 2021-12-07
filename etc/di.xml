@@ -20,6 +20,9 @@
     <preference for="AuroraExtensions\GoogleCloudStorage\Api\StorageObjectManagementInterface"
                 type="AuroraExtensions\GoogleCloudStorage\Model\Adapter\StorageObjectManagement"/>
 
+    <preference for="Magento\MediaStorage\Model\File\Storage\Synchronization"
+                type="AuroraExtensions\GoogleCloudStorage\Model\File\Storage\Synchronization"/>
+
     <virtualType name="AuroraExtensions\GoogleCloudStorage\Model\System\Source\Select\Bucket\Acl"
                  type="AuroraExtensions\ModuleComponents\Model\Config\Source\Select\VirtualSelect">
         <arguments>

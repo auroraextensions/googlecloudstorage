@@ -157,6 +157,9 @@ class Bucket extends AbstractModel
         /** @var string $relativePath */
         $relativePath = $this->storageHelper->getMediaRelativePath($filename);
 
+        // @todo look up media path like https://github.com/magento/magento2/blob/2.4-develop/app/code/Magento/MediaStorage/App/Media.php#L187
+        $relativePath = str_replace('media/', '', $relativePath);
+
         if ($this->getStorage()->objectExists($relativePath)) {
             $this->setData('id', $filename);
             $this->setData('filename', $filename);
