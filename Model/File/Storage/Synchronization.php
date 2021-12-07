@@ -10,7 +10,7 @@ class Synchronization
     /**
      * @var BucketFactory
      */
-    protected $bucket;
+    protected $storageFactory;
 
     /**
      * File stream handler
@@ -20,11 +20,11 @@ class Synchronization
     protected $mediaDirectory;
 
     public function __construct(
-        DirectoryWrite $directory,
-        BucketFactory $bucket
+        BucketFactory $storageFactory,
+        DirectoryWrite $directory
     ) {
+        $this->storageFactory = $storageFactory;
         $this->mediaDirectory = $directory;
-        $this->bucket = $bucket;
     }
 
     /**
@@ -35,9 +35,14 @@ class Synchronization
      */
     public function synchronize($relativeFileName)
     {
-        $storage = $this->bucket->loadByFilename($relativeFileName);
-
+        /** @var $storage Bucket */
+        $storage = $this->storageFactory->create();
+        try {
+            $storage->loadByFilename($relativeFileName);
+        } catch (\Exception $e) {
+        }
         if ($storage->getId()) {
+            /** @var WriteInterface $file */
             $file = $this->mediaDirectory->openFile($relativeFileName, 'w');
             try {
                 $file->lock();
