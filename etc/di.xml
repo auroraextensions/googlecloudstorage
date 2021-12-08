@@ -110,4 +110,9 @@
                 type="AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\Config\SynchronizeStorageParams"
                 sortOrder="10"/>
     </type>
+    <type name="Magento\Catalog\Model\Product\Image">
+        <plugin name="googlecloudstorage_catalog_product_image"
+                type="AuroraExtensions\GoogleCloudStorage\Plugin\Catalog\Product\Image"
+                sortOrder="10"/>
+    </type>
 </config>
