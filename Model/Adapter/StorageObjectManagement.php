@@ -313,7 +313,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
             if (isset($options['name'])) {
                 $options['name'] = implode(DIRECTORY_SEPARATOR, [
                     $prefix,
-                    ltrim($options['name'], DIRECTORY_SEPARATOR . $prefix),
+                    str_replace(DIRECTORY_SEPARATOR . $prefix . DIRECTORY_SEPARATOR, '', $options['name']),
                 ]);
             } else {
                 /** @var StreamInterface $stream */
