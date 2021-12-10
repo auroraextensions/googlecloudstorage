@@ -95,6 +95,10 @@ class ObjectUploader
         $destinationFolder,
         $newFileName = null
     ) {
+        if (!$this->storageAdapter->isEnabled()) {
+            return $result;
+        }
+
         if (!empty($result)) {
             /** @var string $basePath */
             $basePath = (string)($result['path'] ?? '');

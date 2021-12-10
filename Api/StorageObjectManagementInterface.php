@@ -67,4 +67,9 @@ interface StorageObjectManagementInterface extends AbstractStorageManagementInte
      * @return \AuroraExtensions\GoogleCloudStorage\Api\StorageObjectManagementInterface
      */
     public function deleteAllObjects(array $options): StorageObjectManagementInterface;
+
+    /**
+     * @return bool
+     */
+    public function isEnabled(): bool;
 }

@@ -90,6 +90,10 @@ class ObjectAdapter
         $destination = null,
         $newName = null
     ) {
+        if (!$this->storageAdapter->isEnabled()) {
+            return;
+        }
+
         if (!empty($destination)) {
             /** @var string $filePath */
             $filePath = $this->storageHelper->getMediaRelativePath($destination);

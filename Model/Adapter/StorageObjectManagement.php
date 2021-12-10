@@ -23,7 +23,8 @@ use AuroraExtensions\GoogleCloudStorage\{
     Api\StorageObjectPathResolverInterface,
     Component\ModuleConfigTrait,
     Exception\InvalidGoogleCloudStorageSetupException,
-    Model\System\ModuleConfig
+    Model\System\ModuleConfig,
+    Model\File\Storage
 };
 use AuroraExtensions\ModuleComponents\{
     Api\LocalizedScopeDeploymentConfigInterface,
@@ -92,6 +93,9 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
     /** @var bool $useModuleConfig */
     private $useModuleConfig;
 
+    /** @var bool $enabled */
+    private $enabled = false;
+
     /**
      * @param LocalizedScopeDeploymentConfigInterfaceFactory $deploymentConfigFactory
      * @param ExceptionFactory $exceptionFactory
@@ -105,12 +109,14 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
     public function __construct(
         LocalizedScopeDeploymentConfigInterfaceFactory $deploymentConfigFactory,
         ExceptionFactory $exceptionFactory,
+        Storage $fileStorage,
         FileDriver $fileDriver,
         Filesystem $filesystem,
         ModuleConfig $moduleConfig,
         StreamInterfaceFactory $streamFactory,
         bool $useModuleConfig = false
     ) {
+        $this->enabled = $fileStorage->checkBucketUsage();
         $this->deploymentConfig = $deploymentConfigFactory->create(['scope' => 'googlecloud']);
         $this->exceptionFactory = $exceptionFactory;
         $this->fileDriver = $fileDriver;
@@ -127,6 +133,10 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
      */
     private function initialize(): void
     {
+        if (!$this->isEnabled()) {
+            return;
+        }
+
         /** @var string|null $projectName */
         $projectName = $this->useModuleConfig
             ? $this->getConfig()->getGoogleCloudProject()
@@ -450,5 +460,13 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
             : $this->deploymentConfig->get('storage/bucket/acl');
 
         return !empty($aclPolicy) ? $aclPolicy : ModuleConfig::DEFAULT_ACL_POLICY;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function isEnabled() : bool
+    {
+        return $this->enabled;
     }
 }

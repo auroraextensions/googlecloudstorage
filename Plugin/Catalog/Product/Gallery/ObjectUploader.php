@@ -97,6 +97,10 @@ class ObjectUploader
         ExtensionInterface $subject,
         ProductInterface $result
     ) {
+        if (!$this->storageAdapter->isEnabled()) {
+            return $result;
+        }
+
         /** @var string $attrCode */
         $attrCode = $subject->getAttribute()
             ->getAttributeCode();

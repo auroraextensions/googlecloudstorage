@@ -73,7 +73,7 @@ class FileProcessor
         $file,
         $overwrite = true
     ) {
-        if (!$result) {
+        if (!$result || !$this->storageAdapter->isEnabled()) {
             return $result;
         }
 

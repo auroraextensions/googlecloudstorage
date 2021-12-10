@@ -38,14 +38,19 @@ class Image
 
     public function beforeSetBaseFile(ProductImage $image, $file)
     {
+        /** @var $storage Storage\Bucket */
+        $storage = $this->storageFactory->create();
+
+        if (!$storage->getStorage()->isEnabled()) {
+            return;
+        }
+
         $relativeFileName = $this->mediaConfig->getBaseMediaPath() . $file;
 
         if ($this->mediaDirectory->isFile($relativeFileName)) {
             return;
         }
 
-        /** @var $storage Storage\Bucket */
-        $storage = $this->storageFactory->create();
         try {
             $storage->loadByFilename($relativeFileName);
         } catch (\Exception $e) {
