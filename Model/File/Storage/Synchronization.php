@@ -37,6 +37,11 @@ class Synchronization
     {
         /** @var $storage Bucket */
         $storage = $this->storageFactory->create();
+        
+        if (!$storage->getStorage()->isEnabled()) {
+            return;
+        }
+        
         try {
             $storage->loadByFilename($relativeFileName);
         } catch (\Exception $e) {
