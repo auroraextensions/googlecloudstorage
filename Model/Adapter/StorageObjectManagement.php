@@ -272,7 +272,25 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
             ]);
         }
 
-        return $this->bucket->object($path);
+        $object = $this->bucket->object($path);
+
+        if (!$object && $fallback = $this->deploymentConfig->get('storage/fallback_url')) {
+            /* Attempt to load the image from fallback URL and upload to GCS */
+            $ch = curl_init($fallback . $path);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $content = curl_exec($ch);
+            curl_close($ch);
+
+            if ($content) {
+                $object = $this->uploadObject($content, [
+                    'name' => $path,
+                    'predefinedAcl' => $this->getObjectAclPolicy()
+                ]);
+            }
+        }
+
+        return $object;
     }
 
     /**
