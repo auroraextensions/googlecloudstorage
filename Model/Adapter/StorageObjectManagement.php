@@ -274,13 +274,12 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
 
         $object = $this->bucket->object($prefixedPath);
 
-        if (!$object && $fallback = $this->deploymentConfig->get('storage/fallback_url')) {
+        if (!$object->exists() && $fallback = $this->deploymentConfig->get('storage/fallback_url')) {
             /* Attempt to load the image from fallback URL and upload to GCS */
             $ch = curl_init($fallback . $path);
             curl_setopt($ch, CURLOPT_TIMEOUT, 5);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             $content = curl_exec($ch);
-            curl_close($ch);
 
             if ($content && curl_getinfo($ch, CURLINFO_HTTP_CODE) === 200) {
                 $object = $this->uploadObject($content, [
@@ -288,6 +287,8 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
                     'predefinedAcl' => $this->getObjectAclPolicy()
                 ]);
             }
+
+            curl_close($ch);
         }
 
         return $object;
