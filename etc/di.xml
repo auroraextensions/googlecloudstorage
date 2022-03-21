@@ -115,4 +115,14 @@
                 type="AuroraExtensions\GoogleCloudStorage\Plugin\Catalog\Product\Image"
                 sortOrder="10"/>
     </type>
+    <type name="Magento\Catalog\Model\View\Asset\Image">
+        <plugin name="googlecloudstorage_catalog_model_view_asset_image"
+                type="AuroraExtensions\GoogleCloudStorage\Plugin\Catalog\View\Asset\Image"
+                sortOrder="10"/>
+    </type>
+    <type name="Sirv\Magento2\Model\View\Asset\Image">
+        <plugin name="googlecloudstorage_catalog_model_view_asset_image"
+                type="AuroraExtensions\GoogleCloudStorage\Plugin\Catalog\View\Asset\Image"
+                sortOrder="10"/>
+    </type>
 </config>

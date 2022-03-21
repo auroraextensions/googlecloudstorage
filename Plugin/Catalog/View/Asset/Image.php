@@ -1,46 +1,51 @@
 <?php
 
-namespace AuroraExtensions\GoogleCloudStorage\Model\File\Storage;
+namespace AuroraExtensions\GoogleCloudStorage\Plugin\Catalog\View\Asset;
 
-use Magento\Framework\Exception\FileSystemException;
-use Magento\Framework\Filesystem\Directory\WriteInterface as DirectoryWrite;
+use Magento\Framework\View\Asset\LocalInterface;
+use AuroraExtensions\GoogleCloudStorage\Model\File\Storage;
+use Magento\Catalog\Model\Product\Media\Config;
+use Magento\Framework\Filesystem;
+use Magento\Framework\Filesystem\Directory\WriteInterface;
+use Magento\Framework\App\Filesystem\DirectoryList;
 
-class Synchronization
+class Image
 {
     /**
-     * @var BucketFactory
+     * @var Storage\BucketFactory
      */
     protected $storageFactory;
 
     /**
-     * File stream handler
-     *
-     * @var DirectoryWrite
+     * @var WriteInterface
      */
     protected $mediaDirectory;
 
+    /**
+     * @var Config
+     */
+    protected $mediaConfig;
+
     public function __construct(
-        BucketFactory $storageFactory,
-        DirectoryWrite $directory
+        Filesystem $filesystem,
+        Config $mediaConfig,
+        Storage\BucketFactory $storageFactory
     ) {
+        $this->mediaDirectory = $filesystem->getDirectoryWrite(DirectoryList::MEDIA);
+        $this->mediaConfig    = $mediaConfig;
         $this->storageFactory = $storageFactory;
-        $this->mediaDirectory = $directory;
     }
 
-    /**
-     * Synchronize file from GCS to local filesystem
-     *
-     * @param string $relativeFileName
-     * @return void
-     */
-    public function synchronize($relativeFileName)
+    public function beforeGetUrl(LocalInterface $image)
     {
-        /** @var $storage Bucket */
+        /** @var $storage Storage\Bucket */
         $storage = $this->storageFactory->create();
 
         if (!$storage->getStorage()->isEnabled()) {
             return;
         }
+
+        $relativeFileName = $this->mediaConfig->getBaseMediaPath() . $image->getFilePath();
 
         if ($this->mediaDirectory->isFile($relativeFileName)) {
             return;
