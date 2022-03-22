@@ -44,7 +44,7 @@ class Image
         $this->imageHelper    = $imageHelper;
     }
 
-    public function afterGetUrl(LocalInterface $image)
+    public function beforeGetUrl(LocalInterface $image)
     {
         /** @var $storage Storage\Bucket */
         $storage = $this->storageFactory->create();
