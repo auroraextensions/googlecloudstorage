@@ -46,21 +46,6 @@ class Synchronization
             return;
         }
 
-        try {
-            $storage->loadByFilename($relativeFileName);
-        } catch (\Exception $e) {
-        }
-        if ($storage->getId()) {
-            /** @var WriteInterface $file */
-            $file = $this->mediaDirectory->openFile($relativeFileName, 'w');
-            try {
-                $file->lock();
-                $file->write($storage->getContent());
-                $file->unlock();
-                $file->close();
-            } catch (FileSystemException $e) {
-                $file->close();
-            }
-        }
+        $storage->downloadFile($relativeFileName);
     }
 }
