@@ -351,7 +351,7 @@ class Bucket extends AbstractModel
             $file = $this->filesystem->getDirectoryWrite(DirectoryList::MEDIA)->openFile($filePath, 'w');
             try {
                 $file->lock();
-                $file->write($storage->getContent());
+                $file->write($this->getContent());
                 $file->unlock();
                 $file->close();
                 return true;
