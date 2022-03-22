@@ -33,6 +33,7 @@ use Google\Cloud\{
 use Magento\Framework\{
     App\Filesystem\DirectoryList,
     Exception\LocalizedException,
+    Exception\FileSystemException,
     Filesystem,
     Filesystem\Driver\File as FileDriver,
     Model\AbstractModel,
@@ -332,6 +333,34 @@ class Bucket extends AbstractModel
         }
 
         return $this;
+    }
+
+    /**
+     * @param string $filePath
+     * @return bool
+     */
+    public function downloadFile(string $filePath): bool
+    {
+        try {
+            $this->loadByFilename($filePath);
+        } catch (\Exception $e) {
+            return false;
+        }
+
+        if ($this->getId()) {
+            $file = $this->filesystem->getDirectoryWrite(DirectoryList::MEDIA)->openFile($filePath, 'w');
+            try {
+                $file->lock();
+                $file->write($storage->getContent());
+                $file->unlock();
+                $file->close();
+                return true;
+            } catch (FileSystemException $e) {
+                $file->close();
+            }
+        }
+
+        return false;
     }
 
     /**

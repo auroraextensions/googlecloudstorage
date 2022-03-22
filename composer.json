@@ -23,7 +23,8 @@
     "magento/framework": "^100||^101||^102||^103",
     "magento/module-media-storage": "^100||^101",
     "magento/module-store": "^100||^101",
-    "auroraextensions/modulecomponents": "~100.0.0||~100.1.0"
+    "auroraextensions/modulecomponents": "~100.0.0||~100.1.0",
+    "outeredge/magento-base-module": "^2.6.33"
   },
   "autoload": {
     "files": [
