@@ -2,16 +2,16 @@
 
 namespace AuroraExtensions\GoogleCloudStorage\Plugin\Catalog\Product;
 
-use AuroraExtensions\GoogleCloudStorage\Model\File\Storage;
+use AuroraExtensions\GoogleCloudStorage\Model\File\Storage\Synchronization;
 use Magento\Catalog\Model\Product\Image as ProductImage;
 use Magento\Catalog\Model\Product\Media\Config;
 
 class Image
 {
     /**
-     * @var Storage\BucketFactory
+     * @var Synchronization
      */
-    protected $storageFactory;
+    protected $synchronization;
 
     /**
      * @var Config
@@ -19,28 +19,15 @@ class Image
     protected $mediaConfig;
 
     public function __construct(
-        Config $mediaConfig,
-        Storage\BucketFactory $storageFactory
+        Synchronization $synchronization,
+        Config $mediaConfig
     ) {
+        $this->synchronization = $synchronization;
         $this->mediaConfig    = $mediaConfig;
-        $this->storageFactory = $storageFactory;
     }
 
     public function beforeSetBaseFile(ProductImage $image, $file)
     {
-        /** @var $storage Storage\Bucket */
-        $storage = $this->storageFactory->create();
-
-        if (!$storage->getStorage()->isEnabled()) {
-            return;
-        }
-
-        $relativeFileName = $this->mediaConfig->getBaseMediaPath() . $file;
-
-        if ($this->mediaDirectory->isFile($relativeFileName)) {
-            return;
-        }
-
-        $storage->downloadFile($relativeFileName);
+        $this->synchronization->synchronize($this->mediaConfig->getBaseMediaPath() . $file);
     }
 }

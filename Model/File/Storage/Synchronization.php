@@ -2,9 +2,6 @@
 
 namespace AuroraExtensions\GoogleCloudStorage\Model\File\Storage;
 
-use Magento\Framework\Exception\FileSystemException;
-use Magento\Framework\Filesystem\Directory\WriteInterface as DirectoryWrite;
-
 class Synchronization
 {
     /**
@@ -12,19 +9,10 @@ class Synchronization
      */
     protected $storageFactory;
 
-    /**
-     * File stream handler
-     *
-     * @var DirectoryWrite
-     */
-    protected $mediaDirectory;
-
     public function __construct(
-        BucketFactory $storageFactory,
-        DirectoryWrite $directory
+        BucketFactory $storageFactory
     ) {
         $this->storageFactory = $storageFactory;
-        $this->mediaDirectory = $directory;
     }
 
     /**
@@ -39,10 +27,6 @@ class Synchronization
         $storage = $this->storageFactory->create();
 
         if (!$storage->getStorage()->isEnabled()) {
-            return;
-        }
-
-        if ($this->mediaDirectory->isFile($relativeFileName)) {
             return;
         }
 

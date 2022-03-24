@@ -150,20 +150,14 @@ class Bucket extends AbstractModel
     }
 
     /**
-     * @param string $filename
+     * @param string $relativePath
      * @return $this
      */
-    public function loadByFilename(string $filename)
+    public function loadByFilename(string $relativePath)
     {
-        /** @var string $relativePath */
-        $relativePath = $this->storageHelper->getMediaRelativePath($filename);
-
-        // @todo look up media path like https://github.com/magento/magento2/blob/2.4-develop/app/code/Magento/MediaStorage/App/Media.php#L187
-        $relativePath = str_replace('media/', '', $relativePath);
-
         if ($this->getStorage()->objectExists($relativePath)) {
-            $this->setData('id', $filename);
-            $this->setData('filename', $filename);
+            $this->setData('id', $relativePath);
+            $this->setData('filename', $relativePath);
             $this->setData('content', $this->getStorage()->getObject($relativePath)->downloadAsString());
         } else {
             $this->unsetData();
@@ -337,18 +331,28 @@ class Bucket extends AbstractModel
 
     /**
      * @param string $filePath
-     * @return bool
+     * @return bool Returns true on existing file or successful download, false on failure
      */
     public function downloadFile(string $filePath): bool
     {
+        $relativePath = $this->storageHelper->getMediaRelativePath($filePath);
+        // @todo look up media path like https://github.com/magento/magento2/blob/2.4-develop/app/code/Magento/MediaStorage/App/Media.php#L187
+        $relativePath = str_replace(DirectoryList::MEDIA . DIRECTORY_SEPARATOR, '', $relativePath);
+
+        $mediaPath    = $this->filesystem->getDirectoryWrite(DirectoryList::MEDIA);
+
+        if ($mediaPath->isFile($relativePath)) {
+            return true;
+        }
+
         try {
-            $this->loadByFilename($filePath);
+            $this->loadByFilename($relativePath);
         } catch (\Exception $e) {
             return false;
         }
 
         if ($this->getId()) {
-            $file = $this->filesystem->getDirectoryWrite(DirectoryList::MEDIA)->openFile($filePath, 'w');
+            $file = $mediaPath->openFile($relativePath, 'w');
             try {
                 $file->lock();
                 $file->write($this->getContent());
