@@ -340,6 +340,10 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
             }
         }
 
+        if (stristr($options['name'], DIRECTORY_SEPARATOR . 'tmp' . DIRECTORY_SEPARATOR)) {
+            return null;
+        }
+
         return $this->bucket->upload($handle, $options);
     }
 
