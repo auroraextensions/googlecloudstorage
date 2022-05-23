@@ -19,7 +19,6 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Module/etc/module.xsd">
     <module name="AuroraExtensions_GoogleCloudStorage" setup_version="1.0.0">
         <sequence>
-            <module name="AuroraExtensions_ModuleComponents"/>
             <module name="Sirv_Magento2"/>
             <module name="Magento_MediaStorage"/>
             <module name="Magento_Store"/>

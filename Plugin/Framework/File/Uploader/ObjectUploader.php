@@ -23,9 +23,9 @@ use AuroraExtensions\GoogleCloudStorage\{
     Api\StorageObjectManagementInterface,
     Component\ModuleConfigTrait,
     Component\StorageAdapterTrait,
-    Model\System\ModuleConfig
+    Model\System\ModuleConfig,
+    Model\Utils\PathUtils
 };
-use AuroraExtensions\ModuleComponents\Model\Utils\PathUtils;
 use Magento\Framework\{
     Exception\FileSystemException,
     File\Uploader,

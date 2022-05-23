@@ -23,9 +23,9 @@ use AuroraExtensions\GoogleCloudStorage\{
     Api\StorageObjectManagementInterface,
     Component\ModuleConfigTrait,
     Component\StorageAdapterTrait,
-    Model\System\ModuleConfig
+    Model\System\ModuleConfig,
+    Exception\ExceptionFactory
 };
-use AuroraExtensions\ModuleComponents\Exception\ExceptionFactory;
 use Google\Cloud\{
     Storage\StorageObject,
     Storage\ObjectIterator

@@ -24,9 +24,7 @@ use AuroraExtensions\GoogleCloudStorage\{
     Component\ModuleConfigTrait,
     Exception\InvalidGoogleCloudStorageSetupException,
     Model\System\ModuleConfig,
-    Model\File\Storage
-};
-use AuroraExtensions\ModuleComponents\{
+    Model\File\Storage,
     Api\LocalizedScopeDeploymentConfigInterface,
     Api\LocalizedScopeDeploymentConfigInterfaceFactory,
     Exception\ExceptionFactory
