@@ -63,13 +63,6 @@
         </arguments>
     </virtualType>
 
-    <type name="Magento\Framework\Console\CommandListInterface">
-        <arguments>
-            <argument name="commands" xsi:type="array">
-                <item name="googleCloudStorageMediaSyncCommand" xsi:type="object">AuroraExtensions\GoogleCloudStorage\Console\Command\SynchronizeCommand</item>
-            </argument>
-        </arguments>
-    </type>
     <type name="Magento\Catalog\Model\Product\Gallery\CreateHandler">
         <plugin name="googlecloudstorage_catalog_product_gallery_object_uploader"
                 type="AuroraExtensions\GoogleCloudStorage\Plugin\Catalog\Product\Gallery\ObjectUploader"
