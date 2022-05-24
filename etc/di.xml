@@ -17,6 +17,9 @@
  */
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="AuroraExtensions\GoogleCloudStorage\Api\LocalizedScopeDeploymentConfigInterface"
+                type="AuroraExtensions\GoogleCloudStorage\Model\Config\Deployment\LocalizedScopeDeploymentConfig"/>
+
     <preference for="AuroraExtensions\GoogleCloudStorage\Api\StorageObjectManagementInterface"
                 type="AuroraExtensions\GoogleCloudStorage\Model\Adapter\StorageObjectManagement"/>
 
@@ -24,7 +27,7 @@
                 type="AuroraExtensions\GoogleCloudStorage\Model\File\Storage\Synchronization"/>
 
     <virtualType name="AuroraExtensions\GoogleCloudStorage\Model\System\Source\Select\Bucket\Acl"
-                 type="AuroraExtensions\ModuleComponents\Model\Config\Source\Select\VirtualSelect">
+                 type="AuroraExtensions\GoogleCloudStorage\Model\Config\Source\Select\VirtualSelect">
         <arguments>
             <argument name="data" xsi:type="array">
                 <item name="authenticatedRead" xsi:type="string" translatable="true">Authenticated Read</item>
@@ -38,7 +41,7 @@
         </arguments>
     </virtualType>
     <virtualType name="AuroraExtensions\GoogleCloudStorage\Model\System\Source\Select\Bucket\Region"
-                 type="AuroraExtensions\ModuleComponents\Model\Config\Source\Select\VirtualSelect">
+                 type="AuroraExtensions\GoogleCloudStorage\Model\Config\Source\Select\VirtualSelect">
         <arguments>
             <argument name="data" xsi:type="array">
                 <item name="multi-region" xsi:type="string" translatable="true">Multi-region (multi-region)</item>
