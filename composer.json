@@ -10,7 +10,7 @@
     "magento/framework": "^103",
     "magento/module-media-storage": "^100",
     "magento/module-store": "^101",
-    "outeredge/magento-base-module": "^2.6.33||^3.0"
+    "outeredge/magento-base-module": ">=2.6.33"
   },
   "autoload": {
     "files": [
