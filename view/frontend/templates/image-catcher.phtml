@@ -1,0 +1,20 @@
+<?php if ($this->isDeveloperMode()): ?>
+<script>
+    const cdnUrl   = '<?= $this->getMediaUrl() ?>';
+    const mediaUrl = '<?= $this->getBaseMediaUrl() ?>';
+
+    var replacedImages = [];
+
+    document.addEventListener('error', (event) => {
+        if (event.target.tagName.toLowerCase() !== 'img') return;
+        if (replacedImages.includes(event.target.src)) return;
+
+        replacedImages.push(event.target.src);
+        event.target.src = event.target.src.replace(cdnUrl, mediaUrl);
+    }, {
+        capture: true,
+        once: false,
+        passive: true
+    });
+</script>
+<?php endif; ?>
