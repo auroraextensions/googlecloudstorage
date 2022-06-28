@@ -7,10 +7,10 @@
 
     document.addEventListener('error', (event) => {
         if (event.target.tagName.toLowerCase() !== 'img') return;
-        if (replacedImages.includes(event.target.src)) return;
-
-        replacedImages.push(event.target.src);
-        event.target.src = event.target.src.replace(cdnUrl, mediaUrl);
+        var url = event.target.src.split('?')[0];
+        if (replacedImages.includes(url)) return;
+        replacedImages.push(url);
+        event.target.src = url.replace(cdnUrl, mediaUrl) + '?imgstore=<?= $this->getStoreCode() ?>';
     }, {
         capture: true,
         once: false,

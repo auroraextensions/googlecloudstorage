@@ -28,7 +28,7 @@ class ImageCatcher extends Template
     public function __construct(
         Context $context,
         StoreManagerInterface $storeManager,
-        Storage $appState,
+        Storage $storage,
         array $data = []
     ) {
         parent::__construct($context, $data);
@@ -44,11 +44,17 @@ class ImageCatcher extends Template
 
     public function getBaseMediaUrl()
     {
-        return $this->storeManager->getStore()->getBaseUrl(UrlInterface::URL_TYPE_WEB) . DirectoryList::MEDIA . DIRECTORY_SEPARATOR;
+        $baseUrl = parse_url($this->storeManager->getStore()->getBaseUrl(UrlInterface::URL_TYPE_WEB));
+        return $baseUrl['scheme'] . '://' . $baseUrl['host'] . '/' . DirectoryList::MEDIA . DIRECTORY_SEPARATOR;
     }
 
     public function isEnabled()
     {
         return $this->storage->checkBucketUsage();
+    }
+
+    public function getStoreCode()
+    {
+        return $this->storeManager->getStore()->getCode();
     }
 }

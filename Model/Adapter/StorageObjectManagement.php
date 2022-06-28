@@ -270,9 +270,15 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
             ]);
         }
 
-        $object = $this->bucket->object($prefixedPath);
+        $object   = $this->bucket->object($prefixedPath);
+        $fallback = $this->deploymentConfig->get('storage/fallback_url');
 
-        if (!$object->exists() && $fallback = $this->deploymentConfig->get('storage/fallback_url')) {
+        if (!$object->exists() && $fallback) {
+            if (is_array($fallback) && isset($_GET['imgstore']) && isset($fallback[$_GET['imgstore']])) {
+                $fallback = $fallback[$_GET['imgstore']];
+            } elseif (is_array($fallback)) {
+                $fallback = $fallback['default'];
+            }
             /* Attempt to load the image from fallback URL and upload to GCS */
             $ch = curl_init($fallback . $path);
             curl_setopt($ch, CURLOPT_TIMEOUT, 5);
