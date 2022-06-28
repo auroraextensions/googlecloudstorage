@@ -2,6 +2,7 @@
 
 namespace AuroraExtensions\GoogleCloudStorage\Block;
 
+use AuroraExtensions\GoogleCloudStorage\Model\File\Storage;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\App\State;
 use Magento\Framework\UrlInterface;
@@ -21,19 +22,19 @@ class ImageCatcher extends Template
     /**
      * @param Context $context
      * @param Config $mediaConfig
-     * @param State $appState
+     * @param Storage $storage
      * @param array $data
      */
     public function __construct(
         Context $context,
         StoreManagerInterface $storeManager,
-        State $appState,
+        Storage $appState,
         array $data = []
     ) {
         parent::__construct($context, $data);
 
         $this->storeManager = $storeManager;
-        $this->appState     = $appState;
+        $this->storage      = $storage;
     }
 
     public function getMediaUrl()
@@ -46,8 +47,8 @@ class ImageCatcher extends Template
         return $this->storeManager->getStore()->getBaseUrl(UrlInterface::URL_TYPE_WEB) . DirectoryList::MEDIA . DIRECTORY_SEPARATOR;
     }
 
-    public function isDeveloperMode()
+    public function isEnabled()
     {
-        return $this->appState->getMode() == State::MODE_DEVELOPER;
+        return $this->storage->checkBucketUsage();
     }
 }
