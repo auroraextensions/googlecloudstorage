@@ -4,7 +4,6 @@ namespace AuroraExtensions\GoogleCloudStorage\Block;
 
 use AuroraExtensions\GoogleCloudStorage\Model\File\Storage;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\App\State;
 use Magento\Framework\UrlInterface;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;

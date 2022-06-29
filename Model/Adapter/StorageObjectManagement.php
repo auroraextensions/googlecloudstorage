@@ -40,6 +40,7 @@ use Magento\Framework\{
     Filesystem,
     Filesystem\Driver\File as FileDriver
 };
+use Magento\Store\Model\StoreManagerInterface;
 use Psr\Http\{
     Message\StreamInterface,
     Message\StreamInterfaceFactory
@@ -94,6 +95,9 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
     /** @var bool $enabled */
     private $enabled = false;
 
+    /** @var StoreManagerInterface $storeManager */
+    private $storeManager;
+
     /**
      * @param LocalizedScopeDeploymentConfigInterfaceFactory $deploymentConfigFactory
      * @param ExceptionFactory $exceptionFactory
@@ -112,6 +116,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
         Filesystem $filesystem,
         ModuleConfig $moduleConfig,
         StreamInterfaceFactory $streamFactory,
+        StoreManagerInterface $storeManager,
         bool $useModuleConfig = false
     ) {
         $this->enabled = $fileStorage->checkBucketUsage();
@@ -121,6 +126,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
         $this->filesystem = $filesystem;
         $this->moduleConfig = $moduleConfig;
         $this->streamFactory = $streamFactory;
+        $this->storeManager = $storeManager;
         $this->useModuleConfig = $useModuleConfig;
         $this->initialize();
     }
@@ -274,10 +280,14 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
         $fallback = $this->deploymentConfig->get('storage/fallback_url');
 
         if (!$object->exists() && $fallback) {
-            if (is_array($fallback) && isset($_GET['imgstore']) && isset($fallback[$_GET['imgstore']])) {
-                $fallback = $fallback[$_GET['imgstore']];
-            } elseif (is_array($fallback)) {
-                $fallback = $fallback['default'];
+            if (is_array($fallback)) {
+                if (isset($_GET['imgstore']) && isset($fallback[$_GET['imgstore']])) {
+                    $fallback = $fallback[$_GET['imgstore']];
+                } elseif (isset($fallback[$this->storeManager->getStore()->getCode()])) {
+                    $fallback = $fallback[$this->storeManager->getStore()->getCode()];
+                } else {
+                    $fallback = $fallback['default'];
+                }
             }
             /* Attempt to load the image from fallback URL and upload to GCS */
             $ch = curl_init($fallback . $path);
