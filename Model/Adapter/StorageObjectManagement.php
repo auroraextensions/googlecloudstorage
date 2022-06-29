@@ -281,10 +281,16 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
 
         if (!$object->exists() && $fallback) {
             if (is_array($fallback)) {
+                $storecode = $this->storeManager->getStore()->getCode();
+
+                if ($storecode == 'admin' && stristr($_SERVER['REQUEST_URI'], '_admin')) {
+                    $storecode = str_replace('_admin', '', explode('/', ltrim($_SERVER['REQUEST_URI'], '/'))[0]);
+                }
+
                 if (isset($_GET['imgstore']) && isset($fallback[$_GET['imgstore']])) {
                     $fallback = $fallback[$_GET['imgstore']];
-                } elseif (isset($fallback[$this->storeManager->getStore()->getCode()])) {
-                    $fallback = $fallback[$this->storeManager->getStore()->getCode()];
+                } elseif (isset($fallback[$storecode])) {
+                    $fallback = $fallback[$storecode];
                 } else {
                     $fallback = $fallback['default'];
                 }
