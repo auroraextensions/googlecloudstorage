@@ -7,11 +7,11 @@
 
     document.addEventListener('error', (event) => {
         if (event.target.tagName.toLowerCase() !== 'img') return;
-        var url = event.target.src.split('?')[0];
+        const url = event.target.src.split('?')[0];
         if (replacedImages.includes(url)) return;
         replacedImages.push(url);
         event.target.src = url.replace(cdnUrl, mediaUrl) + '?imgstore=<?= $this->getStoreCode() ?>';
-        
+
         if(event.target.offsetParent.tagName.toLowerCase() == 'picture') {
             const sources = event.target.offsetParent.querySelectorAll('source');
             sources.forEach(function(source) {
