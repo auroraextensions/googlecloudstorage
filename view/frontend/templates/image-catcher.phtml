@@ -12,7 +12,7 @@
         replacedImages.push(url);
         event.target.src = url.replace(cdnUrl, mediaUrl) + '?imgstore=<?= $this->getStoreCode() ?>';
 
-        if(event.target.offsetParent.tagName.toLowerCase() == 'picture') {
+        if(event.target.offsetParent?.tagName.toLowerCase() == 'picture') {
             const sources = event.target.offsetParent.querySelectorAll('source');
             sources.forEach(function(source) {
                 let url = source.srcset.split('?')[0];
