@@ -341,6 +341,11 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
      */
     public function objectExists(string $path): bool
     {
+        // Don't waste requests if path does not have an extension
+        if (strpos($path, '.') === false) {
+            return false;
+        }
+
         /** @var StorageObject|null $object */
         $object = $this->getObject($path);
         return ($object !== null && $object->exists());
