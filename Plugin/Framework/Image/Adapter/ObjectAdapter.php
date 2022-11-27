@@ -18,18 +18,13 @@ declare(strict_types=1);
 
 namespace AuroraExtensions\GoogleCloudStorage\Plugin\Framework\Image\Adapter;
 
-use Exception;
-use AuroraExtensions\GoogleCloudStorage\{
-    Api\StorageObjectManagementInterface,
-    Component\ModuleConfigTrait,
-    Component\StorageAdapterTrait,
-    Model\System\ModuleConfig
-};
-use Magento\Framework\{
-    Exception\FileSystemException,
-    Filesystem\Driver\File as FileDriver,
-    Image\Adapter\AdapterInterface
-};
+use Throwable;
+use AuroraExtensions\GoogleCloudStorage\Api\StorageObjectManagementInterface;
+use AuroraExtensions\GoogleCloudStorage\Component\ModuleConfigTrait;
+use AuroraExtensions\GoogleCloudStorage\Component\StorageAdapterTrait;
+use AuroraExtensions\GoogleCloudStorage\Model\System\ModuleConfig;
+use Magento\Framework\Filesystem\Driver\File;
+use Magento\Framework\Image\Adapter\AdapterInterface;
 use Magento\MediaStorage\Helper\File\Storage\Database as StorageHelper;
 use Psr\Log\LoggerInterface;
 
@@ -43,8 +38,8 @@ class ObjectAdapter
      */
     use ModuleConfigTrait, StorageAdapterTrait;
 
-    /** @var FileDriver $fileDriver */
-    private $fileDriver;
+    /** @var File $file */
+    private $file;
 
     /** @var LoggerInterface $logger */
     private $logger;
@@ -56,7 +51,7 @@ class ObjectAdapter
     private $storageHelper;
 
     /**
-     * @param FileDriver $fileDriver
+     * @param File $file
      * @param LoggerInterface $logger
      * @param ModuleConfig $moduleConfig
      * @param StorageObjectManagementInterface $storageAdapter
@@ -64,13 +59,13 @@ class ObjectAdapter
      * @return void
      */
     public function __construct(
-        FileDriver $fileDriver,
+        File $file,
         LoggerInterface $logger,
         ModuleConfig $moduleConfig,
         StorageObjectManagementInterface $storageAdapter,
         StorageHelper $storageHelper
     ) {
-        $this->fileDriver = $fileDriver;
+        $this->file = $file;
         $this->logger = $logger;
         $this->moduleConfig = $moduleConfig;
         $this->storageAdapter = $storageAdapter;
@@ -92,26 +87,24 @@ class ObjectAdapter
     ) {
         if (!empty($destination)) {
             /** @var string $filePath */
-            $filePath = $this->storageHelper->getMediaRelativePath($destination);
-
-            /** @var string $objectPath */
-            $objectPath = $this->getStorage()->getObjectPath($filePath);
-
-            /** @var string $aclPolicy */
-            $aclPolicy = $this->getStorage()->getObjectAclPolicy();
-
-            /** @var array $options */
-            $options = [
-                'name' => $objectPath,
-                'predefinedAcl' => $aclPolicy,
-            ];
+            $filePath = $this->storageHelper
+                ->getMediaRelativePath($destination);
 
             try {
                 /** @var resource $handle */
-                $handle = $this->fileDriver->fileOpen($destination, 'r');
-                $this->getStorage()->uploadObject($handle, $options);
-            } catch (FileSystemException | Exception $e) {
-                $this->logger->critical($e->getMessage());
+                $handle = $this->file->fileOpen($destination, 'r');
+
+                /** @var StorageObjectManagementInterface $storage */
+                $storage = $this->getStorage();
+                $storage->uploadObject(
+                    $handle,
+                    [
+                        'name' => $storage->getObjectPath($filePath),
+                        'predefinedAcl' => $storage->getObjectAclPolicy(),
+                    ]
+                );
+            } catch (Throwable $e) {
+                $this->logger->error($e->getMessage());
             }
         }
     }

@@ -18,35 +18,24 @@ declare(strict_types=1);
 
 namespace AuroraExtensions\GoogleCloudStorage\Model\Adapter;
 
-use AuroraExtensions\GoogleCloudStorage\{
-    Api\StorageObjectManagementInterface,
-    Api\StorageObjectPathResolverInterface,
-    Component\ModuleConfigTrait,
-    Exception\InvalidGoogleCloudStorageSetupException,
-    Model\System\ModuleConfig
-};
-use AuroraExtensions\ModuleComponents\{
-    Api\LocalizedScopeDeploymentConfigInterface,
-    Api\LocalizedScopeDeploymentConfigInterfaceFactory,
-    Exception\ExceptionFactory
-};
-use Google\Cloud\{
-    Storage\Bucket,
-    Storage\ObjectIterator,
-    Storage\StorageClient,
-    Storage\StorageObject
-};
-use Magento\Framework\{
-    App\Filesystem\DirectoryList,
-    Filesystem,
-    Filesystem\Driver\File as FileDriver
-};
-use Psr\Http\{
-    Message\StreamInterface,
-    Message\StreamInterfaceFactory
-};
+use AuroraExtensions\GoogleCloudStorage\Api\StorageObjectManagementInterface;
+use AuroraExtensions\GoogleCloudStorage\Api\StorageObjectPathResolverInterface;
+use AuroraExtensions\GoogleCloudStorage\Component\ModuleConfigTrait;
+use AuroraExtensions\GoogleCloudStorage\Exception\InvalidGoogleCloudStorageSetupException;
+use AuroraExtensions\GoogleCloudStorage\Model\System\ModuleConfig;
+use AuroraExtensions\ModuleComponents\Api\LocalizedScopeDeploymentConfigInterface;
+use AuroraExtensions\ModuleComponents\Api\LocalizedScopeDeploymentConfigInterfaceFactory;
+use AuroraExtensions\ModuleComponents\Exception\ExceptionFactory;
+use Google\Cloud\Storage\Bucket;
+use Google\Cloud\Storage\ObjectIterator;
+use Google\Cloud\Storage\StorageClient;
+use Google\Cloud\Storage\StorageObject;
+use Magento\Framework\App\Filesystem\DirectoryList;
+use Magento\Framework\Filesystem;
+use Magento\Framework\Filesystem\Driver\File;
+use Psr\Http\Message\StreamInterface;
+use Psr\Http\Message\StreamInterfaceFactory;
 
-use const DIRECTORY_SEPARATOR;
 use function implode;
 use function is_resource;
 use function is_string;
@@ -54,8 +43,12 @@ use function ltrim;
 use function preg_replace;
 use function rtrim;
 use function str_replace;
+use function strlen;
+use function substr;
 use function trim;
 use function __;
+
+use const DIRECTORY_SEPARATOR;
 
 class StorageObjectManagement implements StorageObjectManagementInterface, StorageObjectPathResolverInterface
 {
@@ -80,8 +73,8 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
     /** @var ExceptionFactory $exceptionFactory */
     private $exceptionFactory;
 
-    /** @var FileDriver $fileDriver */
-    private $fileDriver;
+    /** @var File $file */
+    private $file;
 
     /** @var Filesystem $filesystem */
     private $filesystem;
@@ -95,17 +88,19 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
     /**
      * @param LocalizedScopeDeploymentConfigInterfaceFactory $deploymentConfigFactory
      * @param ExceptionFactory $exceptionFactory
-     * @param FileDriver $fileDriver
+     * @param File $file
      * @param Filesystem $filesystem
      * @param ModuleConfig $moduleConfig
      * @param StreamInterfaceFactory $streamFactory
      * @param bool $useModuleConfig
      * @return void
+     *
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      */
     public function __construct(
         LocalizedScopeDeploymentConfigInterfaceFactory $deploymentConfigFactory,
         ExceptionFactory $exceptionFactory,
-        FileDriver $fileDriver,
+        File $file,
         Filesystem $filesystem,
         ModuleConfig $moduleConfig,
         StreamInterfaceFactory $streamFactory,
@@ -113,7 +108,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
     ) {
         $this->deploymentConfig = $deploymentConfigFactory->create(['scope' => 'googlecloud']);
         $this->exceptionFactory = $exceptionFactory;
-        $this->fileDriver = $fileDriver;
+        $this->file = $file;
         $this->filesystem = $filesystem;
         $this->moduleConfig = $moduleConfig;
         $this->streamFactory = $streamFactory;
@@ -181,15 +176,18 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
                 ->getAbsolutePath();
 
             /** @var string $filePath */
-            $filePath = implode(DIRECTORY_SEPARATOR, [
-                rtrim($basePath, DIRECTORY_SEPARATOR),
-                '',
-                rtrim($path, DIRECTORY_SEPARATOR),
-            ]);
+            $filePath = implode(
+                DIRECTORY_SEPARATOR,
+                [
+                    rtrim($basePath, DIRECTORY_SEPARATOR),
+                    '',
+                    rtrim($path, DIRECTORY_SEPARATOR),
+                ]
+            );
 
             /** @var string $realPath */
-            $realPath = $this->fileDriver->getRealPath($filePath);
-            return $this->fileDriver->isFile($realPath) ? $realPath : null;
+            $realPath = $this->file->getRealPath($filePath);
+            return $this->file->isFile($realPath) ? $realPath : null;
         }
 
         return !empty($path) ? $path : null;
@@ -215,15 +213,19 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
             ? $this->getConfig()->getBucketPrefix()
             : $this->deploymentConfig->get('storage/bucket/prefix');
 
-        if (empty($config)) {
-            return null;
-        }
-
-        /** @var string $prefix */
-        $prefix = preg_replace(self::DIRSEP_REGEX, DIRECTORY_SEPARATOR, $config);
+        /** @var string|null $prefix */
+        $prefix = !empty($config)
+            ? preg_replace(
+                self::DIRSEP_REGEX,
+                DIRECTORY_SEPARATOR,
+                $config
+            ) : null;
 
         if (!empty($prefix) && $prefix[0] === DIRECTORY_SEPARATOR) {
-            $prefix = ltrim($prefix, DIRECTORY_SEPARATOR);
+            $prefix = ltrim(
+                $prefix,
+                DIRECTORY_SEPARATOR
+            );
         }
 
         return $prefix;
@@ -256,10 +258,13 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
     public function getObject(string $path): ?StorageObject
     {
         if ($this->hasPrefix()) {
-            $path = implode(DIRECTORY_SEPARATOR, [
-                $this->getPrefix(),
-                ltrim($path, DIRECTORY_SEPARATOR),
-            ]);
+            $path = implode(
+                DIRECTORY_SEPARATOR,
+                [
+                    $this->getPrefix(),
+                    ltrim($path, DIRECTORY_SEPARATOR),
+                ]
+            );
         }
 
         return $this->bucket->object($path);
@@ -267,6 +272,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
 
     /**
      * {@inheritdoc}
+     * @SuppressWarnings(PHPMD.ElseExpression)
      */
     public function getObjects(array $options = []): ?ObjectIterator
     {
@@ -275,10 +281,13 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
             $prefix = $this->getPrefix();
 
             if (isset($options['prefix'])) {
-                $options['prefix'] = implode(DIRECTORY_SEPARATOR, [
-                    $prefix,
-                    ltrim($options['prefix'], DIRECTORY_SEPARATOR),
-                ]);
+                $options['prefix'] = implode(
+                    DIRECTORY_SEPARATOR,
+                    [
+                        $prefix,
+                        ltrim($options['prefix'], DIRECTORY_SEPARATOR),
+                    ]
+                );
             } else {
                 $options['prefix'] = $prefix;
             }
@@ -300,8 +309,10 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
     /**
      * {@inheritdoc}
      */
-    public function uploadObject($handle, array $options = []): ?StorageObject
-    {
+    public function uploadObject(
+        $handle,
+        array $options = []
+    ): ?StorageObject {
         if (!is_resource($handle) && !is_string($handle)) {
             return null;
         }
@@ -310,33 +321,54 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
             /** @var string $prefix */
             $prefix = $this->getPrefix();
 
-            if (isset($options['name'])) {
-                $options['name'] = implode(DIRECTORY_SEPARATOR, [
-                    $prefix,
-                    ltrim($options['name'], DIRECTORY_SEPARATOR . $prefix),
-                ]);
-            } else {
+            /** @var string|null $filename */
+            $filename =& $options['name'];
+
+            if ($filename === null) {
                 /** @var StreamInterface $stream */
                 $stream = $this->streamFactory->create(['stream' => $handle]);
 
-                /** @var string $absolutePath */
-                $absolutePath = $this->fileDriver->getRealPath($stream->getMetadata('uri'));
+                /** @var string $realPath */
+                $realPath = $this->file->getRealPath($stream->getMetadata('uri'));
 
-                /** @var string $mediaBaseDir */
-                $mediaBaseDir = rtrim($this->getMediaBaseDirectory(), DIRECTORY_SEPARATOR);
+                /** @var string $mediaDir */
+                $mediaDir = rtrim(
+                    $this->getMediaBaseDirectory(),
+                    DIRECTORY_SEPARATOR
+                );
 
                 /** @var string $relativePath */
                 $relativePath = ltrim(
-                    str_replace($mediaBaseDir, '', $absolutePath),
+                    str_replace($mediaDir, '', $realPath),
                     DIRECTORY_SEPARATOR
                 );
 
                 /* Set bucket-prefixed, absolute pathname on $options['name']. */
-                $options['name'] = implode(DIRECTORY_SEPARATOR, [
-                    $prefix,
-                    ltrim($mediaBaseDir, DIRECTORY_SEPARATOR),
-                    $relativePath,
-                ]);
+                $filename = implode(
+                    DIRECTORY_SEPARATOR,
+                    [
+                        $prefix,
+                        ltrim($mediaDir, DIRECTORY_SEPARATOR),
+                        $relativePath,
+                    ]
+                );
+            }
+
+            /** @var string $substr */
+            $substr = substr(
+                $filename,
+                0,
+                strlen($prefix)
+            );
+
+            if ($substr !== $prefix) {
+                $filename = implode(
+                    DIRECTORY_SEPARATOR,
+                    [
+                        $prefix,
+                        ltrim($filename, DIRECTORY_SEPARATOR)
+                    ]
+                );
             }
         }
 
@@ -353,10 +385,13 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
         }
 
         if ($this->hasPrefix()) {
-            $target = implode(DIRECTORY_SEPARATOR, [
-                $this->getPrefix(),
-                ltrim($target, DIRECTORY_SEPARATOR),
-            ]);
+            $target = implode(
+                DIRECTORY_SEPARATOR,
+                [
+                    $this->getPrefix(),
+                    ltrim($target, DIRECTORY_SEPARATOR),
+                ]
+            );
         }
 
         /** @var StorageObject $object */
@@ -374,10 +409,13 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
         }
 
         if ($this->hasPrefix()) {
-            $target = implode(DIRECTORY_SEPARATOR, [
-                $this->getPrefix(),
-                ltrim($target, DIRECTORY_SEPARATOR),
-            ]);
+            $target = implode(
+                DIRECTORY_SEPARATOR,
+                [
+                    $this->getPrefix(),
+                    ltrim($target, DIRECTORY_SEPARATOR),
+                ]
+            );
         }
 
         /** @var StorageObject $object */
@@ -431,7 +469,10 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
         $parts[] = '';
 
         if ($this->hasPrefix()) {
-            $parts[] = trim($this->getPrefix(), DIRECTORY_SEPARATOR);
+            $parts[] = trim(
+                $this->getPrefix(),
+                DIRECTORY_SEPARATOR
+            );
         }
 
         $parts[] = trim($path, DIRECTORY_SEPARATOR);
@@ -449,6 +490,7 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
             ? $this->getConfig()->getBucketAclPolicy()
             : $this->deploymentConfig->get('storage/bucket/acl');
 
-        return !empty($aclPolicy) ? $aclPolicy : ModuleConfig::DEFAULT_ACL_POLICY;
+        return !empty($aclPolicy) ? $aclPolicy
+            : ModuleConfig::DEFAULT_ACL_POLICY;
     }
 }

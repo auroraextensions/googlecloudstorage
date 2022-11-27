@@ -18,18 +18,17 @@ declare(strict_types=1);
 
 namespace AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\File\Storage;
 
-use Exception;
-use AuroraExtensions\GoogleCloudStorage\{
-    Api\StorageObjectManagementInterface,
-    Component\ModuleConfigTrait,
-    Component\StorageAdapterTrait,
-    Model\System\ModuleConfig
-};
+use Throwable;
+use AuroraExtensions\GoogleCloudStorage\Api\StorageObjectManagementInterface;
+use AuroraExtensions\GoogleCloudStorage\Component\ModuleConfigTrait;
+use AuroraExtensions\GoogleCloudStorage\Component\StorageAdapterTrait;
+use AuroraExtensions\GoogleCloudStorage\Model\System\ModuleConfig;
 use Magento\MediaStorage\Model\File\Storage\File;
 use Psr\Log\LoggerInterface;
 
-use const DIRECTORY_SEPARATOR;
 use function implode;
+
+use const DIRECTORY_SEPARATOR;
 
 class FileProcessor
 {
@@ -84,25 +83,27 @@ class FileProcessor
         $dirname = $file['directory'] ?? '';
 
         if (!empty($dirname)) {
-            $filename = implode(DIRECTORY_SEPARATOR, [
-                $dirname,
-                $filename,
-            ]);
+            $filename = implode(
+                DIRECTORY_SEPARATOR,
+                [
+                    $dirname,
+                    $filename,
+                ]
+            );
         }
 
-        /** @var string $objectPath */
-        $objectPath = $this->getStorage()->getObjectPath($filename);
-
-        /** @var string $aclPolicy */
-        $aclPolicy = $this->getStorage()->getObjectAclPolicy();
-
         try {
-            $this->getStorage()->uploadObject($file['content'], [
-                'name' => $objectPath,
-                'predefinedAcl' => $aclPolicy,
-            ]);
-        } catch (Exception $e) {
-            $this->logger->critical($e->getMessage());
+            /** @var StorageObjectManagementInterface $storage */
+            $storage = $this->getStorage();
+            $storage->uploadObject(
+                $file['content'],
+                [
+                    'name' => $storage->getObjectPath($filename),
+                    'predefinedAcl' => $storage->getObjectAclPolicy(),
+                ]
+            );
+        } catch (Throwable $e) {
+            $this->logger->error($e->getMessage());
         }
 
         return $result;

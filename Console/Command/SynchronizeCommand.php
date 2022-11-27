@@ -20,31 +20,21 @@ namespace AuroraExtensions\GoogleCloudStorage\Console\Command;
 
 use Exception;
 use AuroraExtensions\GoogleCloudStorage\Api\StorageTypeMetadataInterface;
-use Magento\Framework\{
-    App\Area,
-    App\State
-};
-use Magento\MediaStorage\{
-    Model\File\Storage,
-    Model\File\Storage\Flag
-};
+use Magento\Framework\App\Area;
+use Magento\Framework\App\State;
+use Magento\MediaStorage\Model\File\Storage;
+use Magento\MediaStorage\Model\File\Storage\Flag;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\{
-    Console\Command\Command,
-    Console\Input\InputInterface,
-    Console\Output\OutputInterface
-};
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 
-use const null;
 use function strtotime;
 use function time;
 
 class SynchronizeCommand extends Command
 {
-    /** @constant string COMMAND_NAME */
     private const COMMAND_NAME = 'gcs:media:sync';
-
-    /** @constant string COMMAND_DESC */
     private const COMMAND_DESC = 'Synchronize media storage with Google Cloud Storage.';
 
     /** @var State $state */
@@ -97,7 +87,10 @@ class SynchronizeCommand extends Command
             /** @var int|string|null $lastUpdate */
             $lastUpdate = $flag->getLastUpdate() ?: null;
 
-            if ($flag->getState() === Flag::STATE_RUNNING && !empty($lastUpdate) && time() <= strtotime($lastUpdate) + Flag::FLAG_TTL) {
+            if ($flag->getState() === Flag::STATE_RUNNING
+                && !empty($lastUpdate)
+                && time() <= strtotime($lastUpdate) + Flag::FLAG_TTL
+            ) {
                 return;
             }
 

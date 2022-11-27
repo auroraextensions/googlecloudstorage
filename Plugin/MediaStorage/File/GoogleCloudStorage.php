@@ -18,12 +18,10 @@ declare(strict_types=1);
 
 namespace AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\File;
 
-use AuroraExtensions\GoogleCloudStorage\{
-    Model\File\Storage as StorageDriver,
-    Model\File\Storage\Bucket,
-    Model\File\Storage\BucketFactory
-};
-use Magento\MediaStorage\Model\File\Storage;
+use AuroraExtensions\GoogleCloudStorage\Model\File\Storage;
+use AuroraExtensions\GoogleCloudStorage\Model\File\Storage\Bucket;
+use AuroraExtensions\GoogleCloudStorage\Model\File\Storage\BucketFactory;
+use Magento\MediaStorage\Model\File\Storage as FileStorage;
 
 class GoogleCloudStorage
 {
@@ -41,18 +39,21 @@ class GoogleCloudStorage
     }
 
     /**
-     * @param Storage $subject
+     * @param FileStorage $subject
      * @param AbstractModel|bool $result
      * @param int|null $storage
      * @param array $params
      * @return AbstractModel|bool
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function afterGetStorageModel(
-        Storage $subject,
+        FileStorage $subject,
         $result,
         $storage = null,
         $params = []
     ) {
-        return $storage !== StorageDriver::STORAGE_MEDIA_GCS ? $result : $this->bucketFactory->create();
+        return $storage !== Storage::STORAGE_MEDIA_GCS
+            ? $result : $this->bucketFactory->create();
     }
 }
