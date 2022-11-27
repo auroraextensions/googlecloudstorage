@@ -43,6 +43,7 @@ use function ltrim;
 use function preg_replace;
 use function rtrim;
 use function str_replace;
+use function stristr;
 use function strlen;
 use function substr;
 use function trim;
@@ -58,7 +59,6 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
      */
     use ModuleConfigTrait;
 
-    /** @constant string DIRSEP_REGEX */
     private const DIRSEP_REGEX = '#//+#';
 
     /** @var Bucket $bucket */
@@ -313,16 +313,28 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
         $handle,
         array $options = []
     ): ?StorageObject {
-        if (!is_resource($handle) && !is_string($handle)) {
+        /** @var string|null $filename */
+        $filename =& $options['name'];
+
+        /** @var string $tmpPart */
+        $tmpPart = implode(
+            DIRECTORY_SEPARATOR,
+            [
+                '',
+                DirectoryList::TMP,
+                '',
+            ]
+        );
+
+        if (!is_resource($handle) && !is_string($handle)
+            || stristr($filename ?? '', $tmpPart) !== false
+        ) {
             return null;
         }
 
         if ($this->hasPrefix()) {
             /** @var string $prefix */
             $prefix = $this->getPrefix();
-
-            /** @var string|null $filename */
-            $filename =& $options['name'];
 
             if ($filename === null) {
                 /** @var StreamInterface $stream */
@@ -370,10 +382,6 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
                     ]
                 );
             }
-        }
-
-        if (stristr($options['name'], DIRECTORY_SEPARATOR . 'tmp' . DIRECTORY_SEPARATOR)) {
-            return null;
         }
 
         return $this->bucket->upload($handle, $options);
