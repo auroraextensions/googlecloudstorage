@@ -18,30 +18,23 @@ declare(strict_types=1);
 
 namespace AuroraExtensions\GoogleCloudStorage\Model\File\Storage;
 
-use Exception;
-use AuroraExtensions\GoogleCloudStorage\{
-    Api\StorageObjectManagementInterface,
-    Component\ModuleConfigTrait,
-    Component\StorageAdapterTrait,
-    Model\System\ModuleConfig
-};
+use Throwable;
+use AuroraExtensions\GoogleCloudStorage\Api\StorageObjectManagementInterface;
+use AuroraExtensions\GoogleCloudStorage\Component\ModuleConfigTrait;
+use AuroraExtensions\GoogleCloudStorage\Component\StorageAdapterTrait;
+use AuroraExtensions\GoogleCloudStorage\Model\System\ModuleConfig;
 use AuroraExtensions\ModuleComponents\Exception\ExceptionFactory;
-use Google\Cloud\{
-    Storage\StorageObject,
-    Storage\ObjectIterator
-};
-use Magento\Framework\{
-    App\Filesystem\DirectoryList,
-    Exception\LocalizedException,
-    Filesystem,
-    Filesystem\Driver\File as FileDriver,
-    Model\AbstractModel,
-    Phrase
-};
+use Google\Cloud\Storage\ObjectIterator;
+use Google\Cloud\Storage\StorageObject;
+use Magento\Framework\App\Filesystem\DirectoryList;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Filesystem;
+use Magento\Framework\Filesystem\Driver\File;
+use Magento\Framework\Model\AbstractModel;
+use Magento\Framework\Phrase;
 use Magento\MediaStorage\Helper\File\Storage\Database as StorageHelper;
 use Psr\Log\LoggerInterface;
 
-use const DIRECTORY_SEPARATOR;
 use function implode;
 use function iterator_count;
 use function ltrim;
@@ -49,6 +42,8 @@ use function rtrim;
 use function strlen;
 use function substr;
 use function __;
+
+use const DIRECTORY_SEPARATOR;
 
 class Bucket extends AbstractModel
 {
@@ -63,8 +58,8 @@ class Bucket extends AbstractModel
     /** @var ExceptionFactory $exceptionFactory */
     private $exceptionFactory;
 
-    /** @var FileDriver $fileDriver */
-    private $fileDriver;
+    /** @var File $file */
+    private $file;
 
     /** @var Filesystem $filesystem */
     private $filesystem;
@@ -80,7 +75,7 @@ class Bucket extends AbstractModel
 
     /**
      * @param ExceptionFactory $exceptionFactory
-     * @param FileDriver $fileDriver
+     * @param File $file
      * @param Filesystem $filesystem
      * @param LoggerInterface $logger
      * @param ModuleConfig $moduleConfig
@@ -90,7 +85,7 @@ class Bucket extends AbstractModel
      */
     public function __construct(
         ExceptionFactory $exceptionFactory,
-        FileDriver $fileDriver,
+        File $file,
         Filesystem $filesystem,
         LoggerInterface $logger,
         ModuleConfig $moduleConfig,
@@ -98,7 +93,7 @@ class Bucket extends AbstractModel
         StorageObjectManagementInterface $storageAdapter
     ) {
         $this->exceptionFactory = $exceptionFactory;
-        $this->fileDriver = $fileDriver;
+        $this->file = $file;
         $this->filesystem = $filesystem;
         $this->logger = $logger;
         $this->moduleConfig = $moduleConfig;
@@ -250,25 +245,32 @@ class Bucket extends AbstractModel
      */
     public function importFiles(array $files = [])
     {
+        /** @var StorageObjectManagementInterface $storage */
+        $storage = $this->getStorage();
+
         /** @var array $file */
         foreach ($files as $file) {
             /** @var string $filePath */
-            $filePath = $this->getFilePath($file['filename'], $file['directory']);
+            $filePath = $this->getFilePath(
+                $file['filename'],
+                $file['directory']
+            );
 
             /** @var string $relativePath */
-            $relativePath = $this->storageHelper->getMediaRelativePath($filePath);
+            $relativePath = $this->storageHelper
+                ->getMediaRelativePath($filePath);
 
             try {
-                /** @var string $aclPolicy */
-                $aclPolicy = $this->getStorage()->getObjectAclPolicy();
-
                 /* Upload file object to bucket. */
-                $this->getStorage()->uploadObject($file['content'], [
-                    'name' => $relativePath,
-                    'predefinedAcl' => $aclPolicy,
-                ]);
+                $storage->uploadObject(
+                    $file['content'],
+                    [
+                        'name' => $relativePath,
+                        'predefinedAcl' => $storage->getObjectAclPolicy(),
+                    ]
+                );
 
-                if (!$this->getStorage()->objectExists($relativePath)) {
+                if (!$storage->objectExists($relativePath)) {
                     /** @var LocalizedException $exception */
                     $exception = $this->exceptionFactory->create(
                         LocalizedException::class,
@@ -276,9 +278,9 @@ class Bucket extends AbstractModel
                     );
                     throw $exception;
                 }
-            } catch (LocalizedException | Exception $e) {
+            } catch (Throwable $e) {
                 $this->errors[] = $e->getMessage();
-                $this->logger->critical($e);
+                $this->logger->error($e->getMessage());
             }
         }
 
@@ -291,6 +293,9 @@ class Bucket extends AbstractModel
      */
     public function saveFile(string $filename)
     {
+        /** @var StorageObjectManagementInterface $storage */
+        $storage = $this->getStorage();
+
         /** @var string $mediaPath */
         $mediaPath = $this->filesystem
             ->getDirectoryRead(DirectoryList::MEDIA)
@@ -301,21 +306,22 @@ class Bucket extends AbstractModel
 
         try {
             /** @var resource $handle */
-            $handle = $this->fileDriver->fileOpen($filePath, 'r');
+            $handle = $this->file->fileOpen($filePath, 'r');
 
             /** @var string $relativePath */
-            $relativePath = $this->storageHelper->getMediaRelativePath($filePath);
-
-            /** @var string $aclPolicy */
-            $aclPolicy = $this->getStorage()->getObjectAclPolicy();
+            $relativePath = $this->storageHelper
+                ->getMediaRelativePath($filePath);
 
             /* Upload file object to bucket. */
-            $this->getStorage()->uploadObject($handle, [
-                'name' => $relativePath,
-                'predefinedAcl' => $aclPolicy,
-            ]);
+            $storage->uploadObject(
+                $handle,
+                [
+                    'name' => $relativePath,
+                    'predefinedAcl' => $storage->getObjectAclPolicy(),
+                ]
+            );
 
-            if (!$this->getStorage()->objectExists($relativePath)) {
+            if (!$storage->objectExists($relativePath)) {
                 /** @var LocalizedException $exception */
                 $exception = $this->exceptionFactory->create(
                     LocalizedException::class,
@@ -323,9 +329,9 @@ class Bucket extends AbstractModel
                 );
                 throw $exception;
             }
-        } catch (LocalizedException | Exception $e) {
+        } catch (Throwable $e) {
             $this->errors[] = $e->getMessage();
-            $this->logger->critical($e);
+            $this->logger->error($e->getMessage());
         }
 
         return $this;
@@ -347,8 +353,11 @@ class Bucket extends AbstractModel
      */
     public function copyFile(string $source, string $target)
     {
-        if ($this->getStorage()->objectExists($source)) {
-            $this->getStorage()->copyObject($source, $target);
+        /** @var StorageObjectManagementInterface $storage */
+        $storage = $this->getStorage();
+
+        if ($storage->objectExists($source)) {
+            $storage->copyObject($source, $target);
         }
 
         return $this;
@@ -361,8 +370,11 @@ class Bucket extends AbstractModel
      */
     public function renameFile(string $source, string $target)
     {
-        if ($this->getStorage()->objectExists($source)) {
-            $this->getStorage()->renameObject($source, $target);
+        /** @var StorageObjectManagementInterface $storage */
+        $storage = $this->getStorage();
+
+        if ($storage->objectExists($source)) {
+            $storage->renameObject($source, $target);
         }
 
         return $this;
@@ -374,8 +386,11 @@ class Bucket extends AbstractModel
      */
     public function deleteFile(string $path)
     {
-        if ($this->getStorage()->objectExists($path)) {
-            $this->getStorage()->deleteObject($path);
+        /** @var StorageObjectManagementInterface $storage */
+        $storage = $this->getStorage();
+
+        if ($storage->objectExists($path)) {
+            $storage->deleteObject($path);
         }
 
         return $this;
@@ -391,10 +406,17 @@ class Bucket extends AbstractModel
         $subdirs = [];
 
         /** @var string $mediaPath */
-        $mediaPath = $this->storageHelper->getMediaRelativePath($path);
+        $mediaPath = $this->storageHelper
+            ->getMediaRelativePath($path);
 
         /** @var string $prefix */
-        $prefix = rtrim($mediaPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        $prefix = implode(
+            DIRECTORY_SEPARATOR,
+            [
+                rtrim($mediaPath, DIRECTORY_SEPARATOR),
+                '',
+            ]
+        );
 
         /** @var ObjectIterator<StorageObject> $objectsPrefixes */
         $objectsPrefixes = $this->getStorage()->getObjects([
@@ -406,7 +428,10 @@ class Bucket extends AbstractModel
             /** @var string $subdir */
             foreach ($objectsPrefixes['prefixes'] as $subdir) {
                 $subdirs[] = [
-                    'name' => substr($subdir, strlen($prefix)),
+                    'name' => substr(
+                        $subdir,
+                        strlen($prefix)
+                    ),
                 ];
             }
         }
@@ -424,10 +449,17 @@ class Bucket extends AbstractModel
         $files = [];
 
         /** @var string $mediaPath */
-        $mediaPath = $this->storageHelper->getMediaRelativePath($path);
+        $mediaPath = $this->storageHelper
+            ->getMediaRelativePath($path);
 
         /** @var string $prefix */
-        $prefix = rtrim($mediaPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        $prefix = implode(
+            DIRECTORY_SEPARATOR,
+            [
+                rtrim($mediaPath, DIRECTORY_SEPARATOR),
+                '',
+            ]
+        );
 
         /** @var ObjectIterator<StorageObject> $objectsPrefixes */
         $objectsPrefixes = $this->getStorage()->getObjects([
@@ -464,10 +496,13 @@ class Bucket extends AbstractModel
     ): string
     {
         if (!empty($prefix)) {
-            $path = implode(DIRECTORY_SEPARATOR, [
-                rtrim($prefix, DIRECTORY_SEPARATOR),
-                ltrim($path, DIRECTORY_SEPARATOR),
-            ]);
+            $path = implode(
+                DIRECTORY_SEPARATOR,
+                [
+                    rtrim($prefix, DIRECTORY_SEPARATOR),
+                    ltrim($path, DIRECTORY_SEPARATOR),
+                ]
+            );
         }
 
         return $path;

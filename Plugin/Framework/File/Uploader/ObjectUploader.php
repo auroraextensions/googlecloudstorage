@@ -18,19 +18,14 @@ declare(strict_types=1);
 
 namespace AuroraExtensions\GoogleCloudStorage\Plugin\Framework\File\Uploader;
 
-use Exception;
-use AuroraExtensions\GoogleCloudStorage\{
-    Api\StorageObjectManagementInterface,
-    Component\ModuleConfigTrait,
-    Component\StorageAdapterTrait,
-    Model\System\ModuleConfig
-};
+use Throwable;
+use AuroraExtensions\GoogleCloudStorage\Api\StorageObjectManagementInterface;
+use AuroraExtensions\GoogleCloudStorage\Component\ModuleConfigTrait;
+use AuroraExtensions\GoogleCloudStorage\Component\StorageAdapterTrait;
+use AuroraExtensions\GoogleCloudStorage\Model\System\ModuleConfig;
 use AuroraExtensions\ModuleComponents\Model\Utils\PathUtils;
-use Magento\Framework\{
-    Exception\FileSystemException,
-    File\Uploader,
-    Filesystem\Driver\File as FileDriver
-};
+use Magento\Framework\File\Uploader as FileUploader;
+use Magento\Framework\Filesystem\Driver\File;
 use Magento\MediaStorage\Helper\File\Storage\Database as StorageHelper;
 use Psr\Log\LoggerInterface;
 
@@ -45,8 +40,8 @@ class ObjectUploader
      */
     use ModuleConfigTrait, StorageAdapterTrait;
 
-    /** @var FileDriver $fileDriver */
-    private $fileDriver;
+    /** @var File $file */
+    private $file;
 
     /** @var LoggerInterface $logger */
     private $logger;
@@ -58,7 +53,7 @@ class ObjectUploader
     private $storageHelper;
 
     /**
-     * @param FileDriver $fileDriver
+     * @param File $file
      * @param LoggerInterface $logger
      * @param ModuleConfig $moduleConfig
      * @param PathUtils $pathUtils
@@ -67,14 +62,14 @@ class ObjectUploader
      * @return void
      */
     public function __construct(
-        FileDriver $fileDriver,
+        File $file,
         LoggerInterface $logger,
         ModuleConfig $moduleConfig,
         PathUtils $pathUtils,
         StorageObjectManagementInterface $storageAdapter,
         StorageHelper $storageHelper
     ) {
-        $this->fileDriver = $fileDriver;
+        $this->file = $file;
         $this->logger = $logger;
         $this->moduleConfig = $moduleConfig;
         $this->pathUtils = $pathUtils;
@@ -83,14 +78,14 @@ class ObjectUploader
     }
 
     /**
-     * @param Uploader $subject
+     * @param FileUploader $subject
      * @param array|bool $result
      * @param string $destinationFolder
      * @param string|null $newFileName
      * @return array|bool
      */
     public function afterSave(
-        Uploader $subject,
+        FileUploader $subject,
         $result,
         $destinationFolder,
         $newFileName = null
@@ -104,7 +99,10 @@ class ObjectUploader
 
             if (!empty($basePath) && !empty($baseName)) {
                 /** @var string $realPath */
-                $realPath = $this->pathUtils->build($basePath, $baseName);
+                $realPath = $this->pathUtils->build(
+                    $basePath,
+                    $baseName
+                );
                 $this->upload($realPath);
             }
         }
@@ -118,27 +116,25 @@ class ObjectUploader
      */
     private function upload(string $path): void
     {
-        /** @var string $filePath */
-        $filePath = $this->storageHelper->getMediaRelativePath($path);
-
-        /** @var string $objectPath */
-        $objectPath = $this->getStorage()->getObjectPath($filePath);
-
-        /** @var string $aclPolicy */
-        $aclPolicy = $this->getStorage()->getObjectAclPolicy();
-
-        /** @var array $options */
-        $options = [
-            'name' => $objectPath,
-            'predefinedAcl' => $aclPolicy,
-        ];
-
         try {
             /** @var resource $handle */
-            $handle = $this->fileDriver->fileOpen($path, 'r');
-            $this->getStorage()->uploadObject($handle, $options);
-        } catch (FileSystemException | Exception $e) {
-            $this->logger->critical($e->getMessage());
+            $handle = $this->file->fileOpen($path, 'r');
+
+            /** @var string $filePath */
+            $filePath = $this->storageHelper
+                ->getMediaRelativePath($path);
+
+            /** @var StorageObjectManagementInterface $storage */
+            $storage = $this->getStorage();
+            $storage->uploadObject(
+                $handle,
+                [
+                    'name' => $storage->getObjectPath($filePath),
+                    'predefinedAcl' => $storage->getObjectAclPolicy(),
+                ]
+            );
+        } catch (Throwable $e) {
+            $this->logger->error($e->getMessage());
         }
     }
 }

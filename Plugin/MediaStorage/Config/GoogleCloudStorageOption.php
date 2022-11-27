@@ -20,6 +20,7 @@ namespace AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\Config;
 
 use AuroraExtensions\GoogleCloudStorage\Model\File\Storage;
 use Magento\Framework\Option\ArrayInterface;
+
 use function __;
 
 class GoogleCloudStorageOption

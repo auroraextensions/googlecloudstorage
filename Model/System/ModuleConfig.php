@@ -19,22 +19,19 @@ declare(strict_types=1);
 namespace AuroraExtensions\GoogleCloudStorage\Model\System;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Store\{
-    Model\ScopeInterface,
-    Model\Store
-};
+use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\Store;
 
 /**
- * @deprecated 1.2.0 Starting in v1.2.0, an environment deployment configuration is required to supplant the current use of system configuration values.
- *                   An example configuration is available on {@link https://github.com/auroraextensions/googlecloudstorage/blob/master/env.php.sample GitHub}.
- *                   This class will be removed in minor release 1.3.0 and should not be relied upon in future development.
+ * @deprecated 1.2.0
+ *
+ * Starting in v1.2.0, an environment deployment configuration is required to supplant the current use of system configuration values.
+ * An example configuration is available on {@link https://github.com/auroraextensions/googlecloudstorage/blob/master/env.php.sample GitHub}.
+ * This class will be removed in minor release 1.3.0 and should not be relied upon in future development.
  */
 class ModuleConfig
 {
-    /** @constant string DEFAULT_ACL_POLICY */
     public const DEFAULT_ACL_POLICY = 'publicRead';
-
-    /** @constant string DEFAULT_BUCKET_REGION */
     public const DEFAULT_BUCKET_REGION = 'us-central1';
 
     /** @var ScopeConfigInterface $scopeConfig */
@@ -58,8 +55,7 @@ class ModuleConfig
     public function isModuleEnabled(
         int $store = Store::DEFAULT_STORE_ID,
         string $scope = ScopeInterface::SCOPE_STORE
-    ): bool
-    {
+    ): bool {
         return (bool) $this->scopeConfig->isSetFlag(
             'googlecloudstorage/general/enable',
             $scope,
@@ -75,8 +71,7 @@ class ModuleConfig
     public function getGoogleCloudProject(
         int $store = Store::DEFAULT_STORE_ID,
         string $scope = ScopeInterface::SCOPE_STORE
-    ): string
-    {
+    ): string {
         return (string) $this->scopeConfig->getValue(
             'googlecloudstorage/general/gcp_project',
             $scope,
@@ -92,8 +87,7 @@ class ModuleConfig
     public function getJsonKeyFilePath(
         int $store = Store::DEFAULT_STORE_ID,
         string $scope = ScopeInterface::SCOPE_STORE
-    ): string
-    {
+    ): string {
         return (string) $this->scopeConfig->getValue(
             'googlecloudstorage/general/key_file_path',
             $scope,
@@ -109,8 +103,7 @@ class ModuleConfig
     public function getBucketName(
         int $store = Store::DEFAULT_STORE_ID,
         string $scope = ScopeInterface::SCOPE_STORE
-    ): string
-    {
+    ): string {
         return (string) $this->scopeConfig->getValue(
             'googlecloudstorage/bucket/name',
             $scope,
@@ -126,8 +119,7 @@ class ModuleConfig
     public function getBucketPrefix(
         int $store = Store::DEFAULT_STORE_ID,
         string $scope = ScopeInterface::SCOPE_STORE
-    ): ?string
-    {
+    ): ?string {
         return $this->scopeConfig->getValue(
             'googlecloudstorage/bucket/prefix',
             $scope,
@@ -143,8 +135,7 @@ class ModuleConfig
     public function getBucketAclPolicy(
         int $store = Store::DEFAULT_STORE_ID,
         string $scope = ScopeInterface::SCOPE_STORE
-    ): string
-    {
+    ): string {
         return $this->scopeConfig->getValue(
             'googlecloudstorage/bucket/acl',
             $scope,
@@ -160,8 +151,7 @@ class ModuleConfig
     public function getBucketRegion(
         int $store = Store::DEFAULT_STORE_ID,
         string $scope = ScopeInterface::SCOPE_STORE
-    ): string
-    {
+    ): string {
         return $this->scopeConfig->getValue(
             'googlecloudstorage/bucket/region',
             $scope,

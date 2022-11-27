@@ -19,15 +19,13 @@ declare(strict_types=1);
 namespace AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\File;
 
 use AuroraExtensions\GoogleCloudStorage\Model\File\Storage as GoogleCloudStorage;
-use Magento\MediaStorage\{
-    Helper\File\Storage as StorageHelper,
-    Model\File\Storage as FileStorage
-};
+use Magento\MediaStorage\Helper\File\Storage as StorageHelper;
+use Magento\MediaStorage\Model\File\Storage as FileStorage;
+
 use function in_array;
 
 class InternalStorageList
 {
-    /** @constant array STORAGE_TYPES */
     private const STORAGE_TYPES = [
         FileStorage::STORAGE_MEDIA_FILE_SYSTEM,
         GoogleCloudStorage::STORAGE_MEDIA_GCS,
@@ -38,6 +36,8 @@ class InternalStorageList
      * @param bool $result
      * @param int|null $storage
      * @return bool
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function afterIsInternalStorage(
         StorageHelper $subject,

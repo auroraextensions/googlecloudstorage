@@ -19,11 +19,9 @@ declare(strict_types=1);
 namespace AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\Config;
 
 use AuroraExtensions\GoogleCloudStorage\Api\StorageTypeMetadataInterface;
-use Magento\MediaStorage\{
-    Block\System\Config\System\Storage\Media\Synchronize,
-    Model\File\Storage as FileStorage,
-    Model\File\Storage\Flag
-};
+use Magento\MediaStorage\Block\System\Config\System\Storage\Media\Synchronize;
+use Magento\MediaStorage\Model\File\Storage as FileStorage;
+use Magento\MediaStorage\Model\File\Storage\Flag;
 
 class SynchronizeStorageParams
 {
