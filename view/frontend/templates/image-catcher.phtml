@@ -34,7 +34,6 @@
             $('[data-gallery-role=gallery-placeholder]').on('gallery:loaded', async function () {
                 const api = $(this).data('gallery');
                 const images = $('[data-gallery-role=gallery-placeholder]').data('gallery').fotorama.data;
-                console.log(images)
 
                 const checkIfImageExists = (url, callback) => {
                     const img = new Image();
