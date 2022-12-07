@@ -5,7 +5,7 @@
 
     var replacedImages = [];
 
-    document.addEventListener('error', (event) => {
+    window.addEventListener('error', (event) => {
         if (event.target.tagName.toLowerCase() !== 'img') return;
         const url = event.target.src.split('?')[0];
         if (replacedImages.includes(url)) return;
@@ -27,49 +27,51 @@
         passive: true
     });
 
-    // Only run the mage/gallery require on product page
-    if (document.body.classList.contains('catalog-product-view')) {
-        require(['jquery', 'mage/gallery/gallery'], function($, gallery){
+    window.addEventListener('load', function () {
+        // Only run the mage/gallery require on product page
+        if (document.body.classList.contains('catalog-product-view')) {
+            require(['jquery', 'mage/gallery/gallery'], function($, gallery){
 
-            $('[data-gallery-role=gallery-placeholder]').on('gallery:loaded', async function () {
-                const api = $(this).data('gallery');
-                const images = $('[data-gallery-role=gallery-placeholder]').data('gallery').fotorama.data;
+                $('[data-gallery-role=gallery-placeholder]').on('gallery:loaded', async function () {
+                    const api = $(this).data('gallery');
+                    const images = $('[data-gallery-role=gallery-placeholder]').data('gallery').fotorama.data;
 
-                const checkIfImageExists = (url, callback) => {
-                    const img = new Image();
-                    img.src = url;
+                    const checkIfImageExists = (url, callback) => {
+                        const img = new Image();
+                        img.src = url;
 
-                    if (img.complete) {
-                        callback(true);
-                    } else {
-                        img.onload = () => {
+                        if (img.complete) {
                             callback(true);
-                        };
+                        } else {
+                            img.onload = () => {
+                                callback(true);
+                            };
 
-                        img.onerror = () => {
-                            callback(false);
-                        };
+                            img.onerror = () => {
+                                callback(false);
+                            };
+                        }
                     }
-                }
 
-                let replacedGalleryImages = [];
-                const checkAllImages = () => {
-                    images.forEach(image => {
-                        checkIfImageExists(image.img, (exists) => {
-                            if (!exists) {
-                                image.img = image.img.replace(cdnUrl, mediaUrl) + '?imgstore=<?= $this->getStoreCode() ?>';
-                                image.thumb = image.img;
-                            }
-                            replacedGalleryImages.push(image);
+                    let replacedGalleryImages = [];
+                    const checkAllImages = () => {
+                        images.forEach(image => {
+                            checkIfImageExists(image.img, (exists) => {
+                                if (!exists) {
+                                    image.img = image.img.replace(cdnUrl, mediaUrl) + '?imgstore=<?= $this->getStoreCode() ?>';
+                                    image.thumb = image.img;
+                                }
+                                replacedGalleryImages.push(image);
+                            });
                         });
-                    });
-                }
-                await checkAllImages();
-                setTimeout(() => {
-                    api.updateData(replacedGalleryImages)
-                }, 5000);
+                    }
+                    await checkAllImages();
+                    setTimeout(() => {
+                        api.updateData(replacedGalleryImages)
+                    }, 5000);
+                });
             });
-        });
-    }
+        }
+    });
 </script>
 <?php endif; ?>
