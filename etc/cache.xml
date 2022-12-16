@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Cache/etc/cache.xsd">
+    <type name="outeredge_gcs_cache" translate="label,description" instance="AuroraExtensions\GoogleCloudStorage\Model\Cache\Type\GcsCache">
+        <label>GCS Cache</label>
+        <description>Cache for saving GCS path</description>
+    </type>
+</config>

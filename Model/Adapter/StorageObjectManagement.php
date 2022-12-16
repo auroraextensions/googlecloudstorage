@@ -41,6 +41,9 @@ use Magento\Framework\{
     Filesystem\Driver\File as FileDriver
 };
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\Framework\App\CacheInterface;
+use Magento\Framework\Serialize\SerializerInterface;
+use AuroraExtensions\GoogleCloudStorage\Model\Cache\Type\GcsCache;
 use Psr\Http\{
     Message\StreamInterface,
     Message\StreamInterfaceFactory
@@ -98,6 +101,12 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
     /** @var StoreManagerInterface $storeManager */
     private $storeManager;
 
+    /** @var CacheInterface $cache */
+    private $cache;
+
+    /** @var SerializerInterface $serializer */
+    private $serializer;
+
     /**
      * @param LocalizedScopeDeploymentConfigInterfaceFactory $deploymentConfigFactory
      * @param ExceptionFactory $exceptionFactory
@@ -105,6 +114,8 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
      * @param Filesystem $filesystem
      * @param ModuleConfig $moduleConfig
      * @param StreamInterfaceFactory $streamFactory
+     * @param CacheInterface $cache
+     * @param SerializerInterface $serializer
      * @param bool $useModuleConfig
      * @return void
      */
@@ -117,6 +128,8 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
         ModuleConfig $moduleConfig,
         StreamInterfaceFactory $streamFactory,
         StoreManagerInterface $storeManager,
+        CacheInterface $cache,
+        SerializerInterface $serializer,
         bool $useModuleConfig = false
     ) {
         $this->enabled = $fileStorage->checkBucketUsage();
@@ -128,6 +141,8 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
         $this->streamFactory = $streamFactory;
         $this->storeManager = $storeManager;
         $this->useModuleConfig = $useModuleConfig;
+        $this->cache = $cache;
+        $this->serializer = $serializer;
         $this->initialize();
     }
 
@@ -269,6 +284,17 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
      */
     public function getObject(string $path): ?StorageObject
     {
+        $cacheGcs = $this->serializer->unserialize(
+            $this->cache->load(
+                GcsCache::TYPE_IDENTIFIER
+            ));
+
+        if (in_array($path, $cacheGcs)) {
+            //ToDo. Should we return the object instead of null?
+            //AuroraExtensions\GoogleCloudStorage\Model\File\Storage\Bucket::loadByFilename will need the object
+            return NULL;
+        }
+
         if ($this->hasPrefix()) {
             $prefixedPath = implode(DIRECTORY_SEPARATOR, [
                 $this->getPrefix(),
@@ -310,6 +336,14 @@ class StorageObjectManagement implements StorageObjectManagementInterface, Stora
 
             curl_close($ch);
         }
+
+        //Store path in GcsCache
+        $this->cache->save(
+            $this->serializer->serialize($path),
+            GcsCache::TYPE_IDENTIFIER,
+            [GcsCache::CACHE_TAG],
+            86400
+        );
 
         return $object;
     }
