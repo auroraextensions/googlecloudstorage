@@ -18,10 +18,7 @@ declare(strict_types=1);
 
 namespace AuroraExtensions\GoogleCloudStorage\Api;
 
-use Google\Cloud\Storage\StorageClient;
-
 interface StorageTypeMetadataInterface
 {
-    /** @constant int STORAGE_MEDIA_GCS */
     public const STORAGE_MEDIA_GCS = 2;
 }
