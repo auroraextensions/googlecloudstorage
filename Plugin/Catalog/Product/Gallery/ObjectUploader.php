@@ -18,7 +18,6 @@ declare(strict_types=1);
 
 namespace AuroraExtensions\GoogleCloudStorage\Plugin\Catalog\Product\Gallery;
 
-use Throwable;
 use AuroraExtensions\GoogleCloudStorage\Api\StorageObjectManagementInterface;
 use AuroraExtensions\GoogleCloudStorage\Component\ModuleConfigTrait;
 use AuroraExtensions\GoogleCloudStorage\Component\StorageAdapterTrait;
@@ -30,6 +29,7 @@ use Magento\Framework\Filesystem\Driver\File;
 use Magento\Framework\Image\Adapter\AdapterInterface;
 use Magento\MediaStorage\Helper\File\Storage\Database as StorageHelper;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 use function implode;
 
@@ -39,8 +39,9 @@ class ObjectUploader
 {
     /**
      * @var ModuleConfig $moduleConfig
-     * @var StorageObjectManagementInterface $storageAdapter
      * @method ModuleConfig getConfig()
+     * ---
+     * @var StorageObjectManagementInterface $storageAdapter
      * @method StorageObjectManagementInterface getStorage()
      */
     use ModuleConfigTrait, StorageAdapterTrait;
@@ -85,12 +86,12 @@ class ObjectUploader
     /**
      * @param ExtensionInterface $subject
      * @param ProductInterface $result
-     * @return void
+     * @return ProductInterface
      */
     public function afterExecute(
         ExtensionInterface $subject,
         ProductInterface $result
-    ) {
+    ): ProductInterface {
         /** @var string $attrCode */
         $attrCode = $subject->getAttribute()
             ->getAttributeCode();
