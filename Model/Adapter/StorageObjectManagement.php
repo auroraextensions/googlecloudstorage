@@ -36,6 +36,7 @@ use Magento\Framework\Filesystem\Driver\File;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\StreamInterfaceFactory;
 
+use function __;
 use function implode;
 use function is_resource;
 use function is_string;
@@ -47,7 +48,6 @@ use function stristr;
 use function strlen;
 use function substr;
 use function trim;
-use function __;
 
 use const DIRECTORY_SEPARATOR;
 

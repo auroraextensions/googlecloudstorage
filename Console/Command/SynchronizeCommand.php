@@ -18,7 +18,6 @@ declare(strict_types=1);
 
 namespace AuroraExtensions\GoogleCloudStorage\Console\Command;
 
-use Exception;
 use AuroraExtensions\GoogleCloudStorage\Api\StorageTypeMetadataInterface;
 use Magento\Framework\App\Area;
 use Magento\Framework\App\State;
@@ -28,6 +27,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Throwable;
 
 use function strtotime;
 use function time;
@@ -94,20 +94,23 @@ class SynchronizeCommand extends Command
                 return;
             }
 
-            $flag->setState(Flag::STATE_RUNNING)->setFlagData([])->save();
+            $flag->setState(Flag::STATE_RUNNING)
+                 ->setFlagData([])
+                 ->save();
 
             try {
                 $this->storage->synchronize([
                     'type' => StorageTypeMetadataInterface::STORAGE_MEDIA_GCS,
                 ]);
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 $this->logger->critical($e);
                 $flag->passError($e);
             }
 
-            $flag->setState(Flag::STATE_FINISHED)->save();
+            $flag->setState(Flag::STATE_FINISHED)
+                 ->save();
             $output->writeln('<info>Media synchronized successfully!</info>');
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $output->writeln('<error>Media synchronization failed!</error>');
         }
     }

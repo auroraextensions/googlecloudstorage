@@ -21,6 +21,8 @@ namespace AuroraExtensions\GoogleCloudStorage\Model\ResourceModel\File\Storage;
 use AuroraExtensions\GoogleCloudStorage\Api\StorageObjectManagementInterface;
 use AuroraExtensions\GoogleCloudStorage\Component\StorageAdapterTrait;
 
+use function implode;
+use function ltrim;
 use function rtrim;
 
 use const DIRECTORY_SEPARATOR;
@@ -56,6 +58,11 @@ class Bucket
         );
 
         if (!empty($dirname)) {
+            $dirname = $dirname[0] === DIRECTORY_SEPARATOR
+                ? implode(DIRECTORY_SEPARATOR, [
+                    '',
+                    ltrim($dirname, DIRECTORY_SEPARATOR),
+                ]) : $dirname;
             $dirname .= DIRECTORY_SEPARATOR;
             $this->getStorage()->deleteAllObjects(['prefix' => $dirname]);
         }

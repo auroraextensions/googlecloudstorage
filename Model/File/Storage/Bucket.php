@@ -35,13 +35,13 @@ use Magento\Framework\Phrase;
 use Magento\MediaStorage\Helper\File\Storage\Database as StorageHelper;
 use Psr\Log\LoggerInterface;
 
+use function __;
 use function implode;
 use function iterator_count;
 use function ltrim;
 use function rtrim;
 use function strlen;
 use function substr;
-use function __;
 
 use const DIRECTORY_SEPARATOR;
 
@@ -49,8 +49,9 @@ class Bucket extends AbstractModel
 {
     /**
      * @var ModuleConfig $moduleConfig
-     * @var StorageObjectManagementInterface $storageAdapter
      * @method ModuleConfig getConfig()
+     * ---
+     * @var StorageObjectManagementInterface $storageAdapter
      * @method StorageObjectManagementInterface getStorage()
      */
     use ModuleConfigTrait, StorageAdapterTrait;
