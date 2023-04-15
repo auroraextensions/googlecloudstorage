@@ -18,7 +18,6 @@ declare(strict_types=1);
 
 namespace AuroraExtensions\GoogleCloudStorage\Plugin\Framework\File\Uploader;
 
-use Throwable;
 use AuroraExtensions\GoogleCloudStorage\Api\StorageObjectManagementInterface;
 use AuroraExtensions\GoogleCloudStorage\Component\ModuleConfigTrait;
 use AuroraExtensions\GoogleCloudStorage\Component\StorageAdapterTrait;
@@ -28,6 +27,7 @@ use Magento\Framework\File\Uploader as FileUploader;
 use Magento\Framework\Filesystem\Driver\File;
 use Magento\MediaStorage\Helper\File\Storage\Database as StorageHelper;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 class ObjectUploader
 {

@@ -18,7 +18,6 @@ declare(strict_types=1);
 
 namespace AuroraExtensions\GoogleCloudStorage\Plugin\Framework\Image\Adapter;
 
-use Throwable;
 use AuroraExtensions\GoogleCloudStorage\Api\StorageObjectManagementInterface;
 use AuroraExtensions\GoogleCloudStorage\Component\ModuleConfigTrait;
 use AuroraExtensions\GoogleCloudStorage\Component\StorageAdapterTrait;
@@ -27,13 +26,15 @@ use Magento\Framework\Filesystem\Driver\File;
 use Magento\Framework\Image\Adapter\AdapterInterface;
 use Magento\MediaStorage\Helper\File\Storage\Database as StorageHelper;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 class ObjectAdapter
 {
     /**
      * @var ModuleConfig $moduleConfig
-     * @var StorageObjectManagementInterface $storageAdapter
      * @method ModuleConfig getConfig()
+     * ---
+     * @var StorageObjectManagementInterface $storageAdapter
      * @method StorageObjectManagementInterface getStorage()
      */
     use ModuleConfigTrait, StorageAdapterTrait;
