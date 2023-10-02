@@ -11,14 +11,13 @@
  * https://docs.auroraextensions.com/magento/extensions/2.x/googlecloudstorage/LICENSE.txt
  *
  * @package     AuroraExtensions\GoogleCloudStorage\Model\File\Storage
- * @copyright   Copyright (C) 2021 Aurora Extensions <support@auroraextensions.com>
+ * @copyright   Copyright (C) 2023 Aurora Extensions <support@auroraextensions.com>
  * @license     MIT
  */
 declare(strict_types=1);
 
 namespace AuroraExtensions\GoogleCloudStorage\Model\File\Storage;
 
-use Throwable;
 use AuroraExtensions\GoogleCloudStorage\Api\StorageObjectManagementInterface;
 use AuroraExtensions\GoogleCloudStorage\Component\ModuleConfigTrait;
 use AuroraExtensions\GoogleCloudStorage\Component\StorageAdapterTrait;
@@ -34,6 +33,7 @@ use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\Phrase;
 use Magento\MediaStorage\Helper\File\Storage\Database as StorageHelper;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 use function __;
 use function implode;
@@ -494,8 +494,7 @@ class Bucket extends AbstractModel
     public function getFilePath(
         string $path,
         ?string $prefix = null
-    ): string
-    {
+    ): string {
         if (!empty($prefix)) {
             $path = implode(
                 DIRECTORY_SEPARATOR,
