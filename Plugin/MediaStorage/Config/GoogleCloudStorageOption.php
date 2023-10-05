@@ -19,19 +19,21 @@ declare(strict_types=1);
 namespace AuroraExtensions\GoogleCloudStorage\Plugin\MediaStorage\Config;
 
 use AuroraExtensions\GoogleCloudStorage\Model\File\Storage;
-use Magento\Framework\Option\ArrayInterface;
+use Magento\Framework\Data\OptionSourceInterface;
 
 use function __;
 
 class GoogleCloudStorageOption
 {
     /**
-     * @param ArrayInterface $subject
+     * @param OptionSourceInterface $subject
      * @param array $result
      * @return array
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function afterToOptionArray(
-        ArrayInterface $subject,
+        OptionSourceInterface $subject,
         $result
     ) {
         $result[] = [
