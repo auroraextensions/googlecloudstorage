@@ -23,7 +23,7 @@
     "magento/framework": "^100||^101||^102||^103",
     "magento/module-media-storage": "^100||^101",
     "magento/module-store": "^100||^101",
-    "auroraextensions/modulecomponents": "^100.1.0"
+    "auroraextensions/modulecomponents": "dev-composer-php74"
   },
   "autoload": {
     "files": [
